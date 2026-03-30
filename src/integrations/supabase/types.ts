@@ -14,7 +14,255 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      education: {
+        Row: {
+          course: string
+          created_at: string
+          description: string | null
+          id: string
+          institution: string
+          period: string | null
+          sort_order: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          course?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          institution?: string
+          period?: string | null
+          sort_order?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          course?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          institution?: string
+          period?: string | null
+          sort_order?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      experiences: {
+        Row: {
+          company: string
+          created_at: string
+          description: string | null
+          id: string
+          period: string | null
+          role: string
+          sort_order: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          company?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          period?: string | null
+          role?: string
+          sort_order?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          company?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          period?: string | null
+          role?: string
+          sort_order?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      languages: {
+        Row: {
+          created_at: string
+          id: string
+          language: string
+          level: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          language: string
+          level?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          language?: string
+          level?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          area: string | null
+          city: string | null
+          created_at: string
+          email: string
+          id: string
+          level: string | null
+          linkedin_url: string | null
+          name: string
+          objective: string | null
+          onboarding_complete: boolean
+          phone: string | null
+          portfolio_url: string | null
+          situation: string | null
+          target_role: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          area?: string | null
+          city?: string | null
+          created_at?: string
+          email?: string
+          id?: string
+          level?: string | null
+          linkedin_url?: string | null
+          name?: string
+          objective?: string | null
+          onboarding_complete?: boolean
+          phone?: string | null
+          portfolio_url?: string | null
+          situation?: string | null
+          target_role?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          area?: string | null
+          city?: string | null
+          created_at?: string
+          email?: string
+          id?: string
+          level?: string | null
+          linkedin_url?: string | null
+          name?: string
+          objective?: string | null
+          onboarding_complete?: boolean
+          phone?: string | null
+          portfolio_url?: string | null
+          situation?: string | null
+          target_role?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      saved_jobs: {
+        Row: {
+          company: string
+          created_at: string
+          description: string | null
+          id: string
+          location: string | null
+          match_score: number | null
+          notes: string | null
+          status: string
+          title: string
+          type: string | null
+          updated_at: string
+          url: string | null
+          user_id: string
+        }
+        Insert: {
+          company?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          location?: string | null
+          match_score?: number | null
+          notes?: string | null
+          status?: string
+          title: string
+          type?: string | null
+          updated_at?: string
+          url?: string | null
+          user_id: string
+        }
+        Update: {
+          company?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          location?: string | null
+          match_score?: number | null
+          notes?: string | null
+          status?: string
+          title?: string
+          type?: string | null
+          updated_at?: string
+          url?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      skills: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          type?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      usage_logs: {
+        Row: {
+          action: string
+          created_at: string
+          id: string
+          module: string
+          user_id: string
+        }
+        Insert: {
+          action: string
+          created_at?: string
+          id?: string
+          module: string
+          user_id: string
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          id?: string
+          module?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
