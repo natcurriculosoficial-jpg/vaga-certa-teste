@@ -44,7 +44,7 @@ export default function Resume({ user }: { user: UserData }) {
     const exp = experiences.find(e => e.id === id);
     if (!exp?.description) return;
     setAiLoading(id);
-    const result = await gemini.transformToBulletPoints(exp.description, user.targetRole);
+    const result = await gemini.transformToBulletPoints(exp.description, user.target_role || undefined);
     updateExp(id, "description", result);
     setAiLoading(null);
     toast({ title: "Bullets gerados com IA ✨" });
