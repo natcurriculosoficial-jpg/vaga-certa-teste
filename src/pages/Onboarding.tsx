@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import { Upload } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
-import { UserData } from "@/hooks/useAuth";
+import type { Profile } from "@/hooks/useAuth";
 
 const situations = [
   { id: "employed", label: "Empregado buscando nova vaga", emoji: "💼" },
@@ -17,13 +17,14 @@ const situations = [
 const areas = ["RH", "Marketing", "TI", "Financeiro", "Vendas", "Engenharia", "Jurídico", "Saúde", "Educação", "Design", "Administração", "Outros"];
 const levels = ["Estágio", "Júnior", "Pleno", "Sênior", "Gerência", "Diretoria"];
 
-export default function Onboarding({ onUpdate }: { onUpdate: (data: Partial<UserData>) => void }) {
+export default function Onboarding({ onUpdate }: { onUpdate: (data: Partial<Profile>) => Promise<void> }) {
   const [step, setStep] = useState(1);
   const [situation, setSituation] = useState("");
   const [area, setArea] = useState("");
   const [areaSearch, setAreaSearch] = useState("");
   const [targetRole, setTargetRole] = useState("");
   const [level, setLevel] = useState("");
+  const [saving, setSaving] = useState(false);
   const navigate = useNavigate();
 
   const filteredAreas = areas.filter(a => a.toLowerCase().includes(areaSearch.toLowerCase()));
@@ -33,10 +34,17 @@ export default function Onboarding({ onUpdate }: { onUpdate: (data: Partial<User
     else finish();
   };
 
-  const finish = () => {
-    onUpdate({ situation, area, targetRole, level, onboardingComplete: true });
-    toast({ title: "Perfil configurado! 🎉", description: "Vamos começar sua jornada." });
-    navigate("/dashboard");
+  const finish = async () => {
+    setSaving(true);
+    try {
+      await onUpdate({ situation, area, target_role: targetRole, level, onboarding_complete: true });
+      toast({ title: "Perfil configurado! 🎉", description: "Vamos começar sua jornada." });
+      navigate("/dashboard");
+    } catch (err: any) {
+      toast({ title: "Erro ao salvar", description: err.message, variant: "destructive" });
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -143,12 +151,12 @@ export default function Onboarding({ onUpdate }: { onUpdate: (data: Partial<User
             )}
             <div className="ml-auto flex gap-2">
               {step === 4 && (
-                <Button variant="ghost" onClick={finish}>Pular</Button>
+                <Button variant="ghost" onClick={finish} disabled={saving}>Pular</Button>
               )}
               <Button onClick={next} disabled={
-                (step === 1 && !situation) || (step === 2 && !area) || (step === 3 && (!targetRole || !level))
+                saving || (step === 1 && !situation) || (step === 2 && !area) || (step === 3 && (!targetRole || !level))
               }>
-                {step === 4 ? "Concluir" : "Próximo"}
+                {saving ? "Salvando..." : step === 4 ? "Concluir" : "Próximo"}
               </Button>
             </div>
           </div>

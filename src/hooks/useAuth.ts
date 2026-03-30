@@ -1,65 +1,133 @@
 import { useState, useEffect, useCallback } from "react";
+import { supabase } from "@/integrations/supabase/client";
+import type { User, Session } from "@supabase/supabase-js";
 
-export interface UserData {
+export interface Profile {
+  id: string;
+  user_id: string;
   name: string;
   email: string;
-  situation?: string;
-  area?: string;
-  targetRole?: string;
-  level?: string;
-  onboardingComplete?: boolean;
+  phone: string | null;
+  city: string | null;
+  linkedin_url: string | null;
+  portfolio_url: string | null;
+  situation: string | null;
+  area: string | null;
+  target_role: string | null;
+  level: string | null;
+  objective: string | null;
+  onboarding_complete: boolean;
+  created_at: string;
+  updated_at: string;
 }
 
+// Keep backward compat alias
+export type UserData = Profile;
+
 export function useAuth() {
-  const [user, setUser] = useState<UserData | null>(null);
+  const [session, setSession] = useState<Session | null>(null);
+  const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const stored = localStorage.getItem("vc_user");
-    if (stored) setUser(JSON.parse(stored));
-    setLoading(false);
+  const fetchProfile = useCallback(async (userId: string) => {
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("*")
+      .eq("user_id", userId)
+      .single();
+    if (error) {
+      console.error("Error fetching profile:", error);
+      return null;
+    }
+    return data as Profile;
   }, []);
 
-  const login = useCallback((email: string, _password: string) => {
-    const stored = localStorage.getItem("vc_users");
-    const users: Record<string, UserData & { password: string }> = stored ? JSON.parse(stored) : {};
-    const found = users[email];
-    if (found && found.password === _password) {
-      const { password: _, ...userData } = found;
-      localStorage.setItem("vc_user", JSON.stringify(userData));
-      setUser(userData);
-      return true;
-    }
-    // Demo: allow any login
-    const demo: UserData = { name: "Usuário Demo", email };
-    localStorage.setItem("vc_user", JSON.stringify(demo));
-    setUser(demo);
+  useEffect(() => {
+    // Set up auth listener FIRST
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, newSession) => {
+        setSession(newSession);
+        if (newSession?.user) {
+          // Use setTimeout to avoid Supabase deadlock
+          setTimeout(async () => {
+            const p = await fetchProfile(newSession.user.id);
+            setProfile(p);
+            setLoading(false);
+          }, 0);
+        } else {
+          setProfile(null);
+          setLoading(false);
+        }
+      }
+    );
+
+    // Then get initial session
+    supabase.auth.getSession().then(async ({ data: { session: s } }) => {
+      setSession(s);
+      if (s?.user) {
+        const p = await fetchProfile(s.user.id);
+        setProfile(p);
+      }
+      setLoading(false);
+    });
+
+    return () => subscription.unsubscribe();
+  }, [fetchProfile]);
+
+  const login = useCallback(async (email: string, password: string) => {
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) throw error;
     return true;
   }, []);
 
-  const signup = useCallback((name: string, email: string, password: string) => {
-    const stored = localStorage.getItem("vc_users");
-    const users: Record<string, any> = stored ? JSON.parse(stored) : {};
-    users[email] = { name, email, password, onboardingComplete: false };
-    localStorage.setItem("vc_users", JSON.stringify(users));
-    const userData: UserData = { name, email, onboardingComplete: false };
-    localStorage.setItem("vc_user", JSON.stringify(userData));
-    setUser(userData);
-  }, []);
-
-  const updateUser = useCallback((data: Partial<UserData>) => {
-    setUser(prev => {
-      if (!prev) return prev;
-      const updated = { ...prev, ...data };
-      localStorage.setItem("vc_user", JSON.stringify(updated));
-      return updated;
+  const signup = useCallback(async (name: string, email: string, password: string) => {
+    const { error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        data: { name },
+        emailRedirectTo: window.location.origin,
+      },
     });
+    if (error) throw error;
   }, []);
 
-  const logout = useCallback(() => {
-    localStorage.removeItem("vc_user");
-    setUser(null);
+  const loginWithGoogle = useCallback(async () => {
+    const { error } = await supabase.auth.signInWithOAuth({
+      provider: "google",
+      options: { redirectTo: window.location.origin },
+    });
+    if (error) throw error;
   }, []);
 
-  return { user, loading, login, signup, updateUser, logout };
+  const updateProfile = useCallback(async (data: Partial<Profile>) => {
+    if (!session?.user) return;
+    const { error } = await supabase
+      .from("profiles")
+      .update(data)
+      .eq("user_id", session.user.id);
+    if (error) {
+      console.error("Error updating profile:", error);
+      throw error;
+    }
+    setProfile(prev => prev ? { ...prev, ...data } : prev);
+  }, [session]);
+
+  const logout = useCallback(async () => {
+    await supabase.auth.signOut();
+    setSession(null);
+    setProfile(null);
+  }, []);
+
+  return {
+    user: profile,
+    session,
+    loading,
+    login,
+    signup,
+    loginWithGoogle,
+    updateProfile,
+    updateUser: updateProfile, // backward compat
+    logout,
+  };
 }

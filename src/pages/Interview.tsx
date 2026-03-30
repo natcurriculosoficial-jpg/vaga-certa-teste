@@ -12,7 +12,7 @@ interface Message {
 }
 
 export default function Interview({ user }: { user: UserData }) {
-  const [role, setRole] = useState(user.targetRole || "");
+  const [role, setRole] = useState(user.target_role || "");
   const [company, setCompany] = useState("");
   const [started, setStarted] = useState(false);
   const [messages, setMessages] = useState<Message[]>([]);

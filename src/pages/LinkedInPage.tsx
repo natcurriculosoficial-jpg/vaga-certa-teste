@@ -43,11 +43,11 @@ export default function LinkedInPage({ user }: { user: UserData }) {
     setAiLoading(id);
     let result = "";
     if (id === "headline") {
-      result = await gemini.generateLinkedInHeadline(user.targetRole || "Analista", user.area || "TI");
+      result = await gemini.generateLinkedInHeadline(user.target_role || "Analista", user.area || "TI");
     } else if (id === "about") {
-      result = await gemini.generateLinkedInAbout(user.name || "Profissional", user.targetRole || "Analista", user.area || "TI");
+      result = await gemini.generateLinkedInAbout(user.name || "Profissional", user.target_role || "Analista", user.area || "TI");
     } else {
-      result = await gemini.generateText(`Gere conteúdo profissional para a seção "${sections.find(s => s.id === id)?.label}" do LinkedIn de um profissional de ${user.area || "TI"} buscando ${user.targetRole || "nova posição"}. Apenas o texto.`);
+      result = await gemini.generateText(`Gere conteúdo profissional para a seção "${sections.find(s => s.id === id)?.label}" do LinkedIn de um profissional de ${user.area || "TI"} buscando ${user.target_role || "nova posição"}. Apenas o texto.`);
     }
     update(id, result);
     setAiLoading(null);

@@ -6,22 +6,33 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "@/hooks/use-toast";
 
-export default function Signup({ onSignup }: { onSignup: (name: string, email: string, password: string) => void }) {
+interface SignupProps {
+  onSignup: (name: string, email: string, password: string) => Promise<void>;
+}
+
+export default function Signup({ onSignup }: SignupProps) {
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (password !== confirm) {
       toast({ title: "Senhas não conferem", variant: "destructive" });
       return;
     }
-    onSignup(name, email, password);
-    toast({ title: "Conta criada com sucesso! 🎉" });
-    navigate("/onboarding");
+    setLoading(true);
+    try {
+      await onSignup(name, email, password);
+      toast({ title: "Conta criada com sucesso! 🎉", description: "Verifique seu e-mail para confirmar." });
+    } catch (err: any) {
+      toast({ title: "Erro ao criar conta", description: err.message, variant: "destructive" });
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -46,7 +57,9 @@ export default function Signup({ onSignup }: { onSignup: (name: string, email: s
             <Label>Confirmar senha</Label>
             <Input type="password" placeholder="••••••••" value={confirm} onChange={e => setConfirm(e.target.value)} required className="bg-muted/50" />
           </div>
-          <Button type="submit" className="w-full">Criar conta</Button>
+          <Button type="submit" className="w-full" disabled={loading}>
+            {loading ? "Criando..." : "Criar conta"}
+          </Button>
         </form>
         <p className="text-center text-sm text-muted-foreground">
           Já tem conta?{" "}

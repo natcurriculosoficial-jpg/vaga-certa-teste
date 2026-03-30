@@ -3,17 +3,25 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "@/hooks/use-toast";
-import { UserData } from "@/hooks/useAuth";
+import type { Profile } from "@/hooks/useAuth";
 
-export default function Profile({ user, onUpdate }: { user: UserData; onUpdate: (data: Partial<UserData>) => void }) {
+export default function ProfilePage({ user, onUpdate }: { user: Profile; onUpdate: (data: Partial<Profile>) => Promise<void> }) {
   const [name, setName] = useState(user.name || "");
   const [area, setArea] = useState(user.area || "");
-  const [targetRole, setTargetRole] = useState(user.targetRole || "");
+  const [targetRole, setTargetRole] = useState(user.target_role || "");
   const [level, setLevel] = useState(user.level || "");
+  const [saving, setSaving] = useState(false);
 
-  const save = () => {
-    onUpdate({ name, area, targetRole, level });
-    toast({ title: "Perfil atualizado! ✅" });
+  const save = async () => {
+    setSaving(true);
+    try {
+      await onUpdate({ name, area, target_role: targetRole, level });
+      toast({ title: "Perfil atualizado! ✅" });
+    } catch (err: any) {
+      toast({ title: "Erro ao salvar", description: err.message, variant: "destructive" });
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -25,7 +33,9 @@ export default function Profile({ user, onUpdate }: { user: UserData; onUpdate: 
         <div className="space-y-2"><Label>Área profissional</Label><Input value={area} onChange={e => setArea(e.target.value)} className="bg-muted/50" /></div>
         <div className="space-y-2"><Label>Cargo desejado</Label><Input value={targetRole} onChange={e => setTargetRole(e.target.value)} className="bg-muted/50" /></div>
         <div className="space-y-2"><Label>Nível</Label><Input value={level} onChange={e => setLevel(e.target.value)} className="bg-muted/50" /></div>
-        <Button onClick={save} className="w-full">Salvar alterações</Button>
+        <Button onClick={save} className="w-full" disabled={saving}>
+          {saving ? "Salvando..." : "Salvar alterações"}
+        </Button>
       </div>
     </div>
   );
