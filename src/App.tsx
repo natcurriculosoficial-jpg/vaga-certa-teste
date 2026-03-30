@@ -1,9 +1,9 @@
-import { useState } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Route, Routes, Navigate } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
+import { ThemeProvider } from "@/hooks/useTheme";
 import { useAuth } from "@/hooks/useAuth";
 import AppLayout from "@/components/AppLayout";
 import Login from "@/pages/Login";
@@ -27,7 +27,10 @@ function AppRoutes() {
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="animate-pulse-soft text-secondary text-lg">Carregando...</div>
+        <div className="flex flex-col items-center gap-4">
+          <div className="w-10 h-10 rounded-xl gradient-primary animate-pulse" />
+          <p className="text-muted-foreground text-sm animate-pulse">Carregando...</p>
+        </div>
       </div>
     );
   }
@@ -71,13 +74,15 @@ function AppRoutes() {
 
 const App = () => (
   <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <Toaster />
-      <Sonner />
-      <BrowserRouter>
-        <AppRoutes />
-      </BrowserRouter>
-    </TooltipProvider>
+    <ThemeProvider>
+      <TooltipProvider>
+        <Toaster />
+        <Sonner />
+        <BrowserRouter>
+          <AppRoutes />
+        </BrowserRouter>
+      </TooltipProvider>
+    </ThemeProvider>
   </QueryClientProvider>
 );
 
