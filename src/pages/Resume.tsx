@@ -52,7 +52,7 @@ export default function Resume({ user }: { user: UserData }) {
 
   const generateObj = async () => {
     setAiLoading("objective");
-    const result = await gemini.generateObjective(user.targetRole || "Analista", user.level || "Pleno", user.area || "TI");
+    const result = await gemini.generateObjective(user.target_role || "Analista", user.level || "Pleno", user.area || "TI");
     setObjective(result);
     setAiLoading(null);
     toast({ title: "Objetivo gerado com IA ✨" });
