@@ -129,21 +129,8 @@ export default function Dashboard({ user }: { user: Profile }) {
         </div>
       </motion.div>
 
-      {/* FAB */}
-      <motion.div
-        initial={{ scale: 0, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        transition={{ delay: 0.5, type: "spring", stiffness: 300, damping: 25 }}
-        className="fixed bottom-24 md:bottom-8 right-6 z-10"
-      >
-        <Button
-          onClick={() => navigate("/resume")}
-          className="h-14 w-14 rounded-2xl shadow-lg gradient-primary hover:opacity-90 transition-opacity"
-          size="icon"
-        >
-          <Plus className="h-6 w-6 text-white" />
-        </Button>
-      </motion.div>
+      {/* FAB Menu */}
+      <FabMenu />
     </motion.div>
   );
 }
