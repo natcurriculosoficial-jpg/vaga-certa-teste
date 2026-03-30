@@ -4,10 +4,13 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Plus, Trash2, Sparkles, Download, Loader2 } from "lucide-react";
+import { Plus, Trash2, Sparkles, Loader2 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { UserData } from "@/hooks/useAuth";
 import * as gemini from "@/services/gemini";
+import LanguagesStep from "@/components/resume/LanguagesStep";
+import SkillsStep from "@/components/resume/SkillsStep";
+import ResumeExport from "@/components/resume/ResumeExport";
 
 interface Experience {
   id: string; company: string; role: string; period: string; description: string;
@@ -28,14 +31,12 @@ export default function Resume({ user }: { user: UserData }) {
   const [educations, setEducations] = useState<Education[]>([]);
   const [courses, setCourses] = useState<Course[]>([]);
   const [skills, setSkills] = useState<string[]>([]);
-  const [skillInput, setSkillInput] = useState("");
   const [languages, setLanguages] = useState<{ lang: string; level: string }[]>([]);
   const [aiLoading, setAiLoading] = useState<string | null>(null);
 
   const addExperience = () => setExperiences(p => [...p, { id: crypto.randomUUID(), company: "", role: "", period: "", description: "" }]);
   const addEducation = () => setEducations(p => [...p, { id: crypto.randomUUID(), institution: "", course: "", period: "" }]);
   const addCourse = () => setCourses(p => [...p, { id: crypto.randomUUID(), name: "", institution: "" }]);
-  const addLanguage = () => setLanguages(p => [...p, { lang: "", level: "Básico" }]);
 
   const updateExp = (id: string, field: keyof Experience, value: string) =>
     setExperiences(p => p.map(e => e.id === id ? { ...e, [field]: value } : e));
@@ -67,18 +68,14 @@ export default function Resume({ user }: { user: UserData }) {
     toast({ title: "Texto melhorado ✨" });
   };
 
-  const addSkill = () => {
-    if (skillInput.trim() && !skills.includes(skillInput.trim())) {
-      setSkills(p => [...p, skillInput.trim()]);
-      setSkillInput("");
-    }
-  };
-
-  const suggestSkillsAI = async () => {
-    setAiLoading("skills");
-    const result = await gemini.suggestSkills(user.area || "TI");
-    toast({ title: "Sugestões geradas ✨", description: result.slice(0, 100) + "..." });
-    setAiLoading(null);
+  const resumeData = {
+    ...personal,
+    objective,
+    experiences: experiences.map(({ id, ...rest }) => rest),
+    educations: educations.map(({ id, ...rest }) => rest),
+    courses: courses.map(({ id, ...rest }) => rest),
+    skills,
+    languages,
   };
 
   return (
@@ -111,12 +108,7 @@ export default function Resume({ user }: { user: UserData }) {
             </TabsContent>
 
             <TabsContent value="objective" className="glass-card p-5 space-y-4 mt-4">
-              <Textarea
-                value={objective}
-                onChange={e => setObjective(e.target.value)}
-                placeholder="Seu objetivo profissional..."
-                className="bg-muted/50 min-h-[120px]"
-              />
+              <Textarea value={objective} onChange={e => setObjective(e.target.value)} placeholder="Seu objetivo profissional..." className="bg-muted/50 min-h-[120px]" />
               <div className="flex gap-2">
                 <Button size="sm" onClick={generateObj} disabled={aiLoading === "objective"}>
                   {aiLoading === "objective" ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <Sparkles className="h-3 w-3 mr-1" />}
@@ -205,96 +197,69 @@ export default function Resume({ user }: { user: UserData }) {
               </Button>
             </TabsContent>
 
-            <TabsContent value="skills" className="glass-card p-5 space-y-4 mt-4">
-              <div className="flex gap-2">
-                <Input value={skillInput} onChange={e => setSkillInput(e.target.value)} onKeyDown={e => e.key === "Enter" && addSkill()} placeholder="Adicionar habilidade..." className="bg-muted/50" />
-                <Button size="sm" onClick={addSkill}>Adicionar</Button>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {skills.map(s => (
-                  <span key={s} className="px-3 py-1 rounded-full text-sm border border-border bg-muted/50 text-foreground flex items-center gap-1">
-                    {s}
-                    <button onClick={() => setSkills(p => p.filter(sk => sk !== s))} className="text-muted-foreground hover:text-destructive ml-1">&times;</button>
-                  </span>
-                ))}
-              </div>
-              <Button size="sm" variant="outline" onClick={suggestSkillsAI} disabled={aiLoading === "skills"}>
-                {aiLoading === "skills" ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <Sparkles className="h-3 w-3 mr-1" />}
-                Sugerir com IA
-              </Button>
+            <TabsContent value="skills" className="glass-card p-5 mt-4">
+              <SkillsStep skills={skills} setSkills={setSkills} userArea={user.area} userRole={user.target_role} />
             </TabsContent>
 
-            <TabsContent value="languages" className="space-y-4 mt-4">
-              {languages.map((l, i) => (
-                <div key={i} className="glass-card p-4 flex gap-3 items-center">
-                  <Input value={l.lang} onChange={e => setLanguages(p => p.map((ll, ii) => ii === i ? { ...ll, lang: e.target.value } : ll))} placeholder="Idioma" className="bg-muted/50 flex-1" />
-                  <select
-                    value={l.level}
-                    onChange={e => setLanguages(p => p.map((ll, ii) => ii === i ? { ...ll, level: e.target.value } : ll))}
-                    className="bg-muted/50 border border-input rounded-md px-3 py-2 text-sm text-foreground"
-                  >
-                    {["Básico", "Intermediário", "Avançado", "Fluente"].map(lv => <option key={lv} value={lv}>{lv}</option>)}
-                  </select>
-                  <Button size="icon" variant="ghost" onClick={() => setLanguages(p => p.filter((_, ii) => ii !== i))}>
-                    <Trash2 className="h-4 w-4 text-destructive" />
-                  </Button>
-                </div>
-              ))}
-              <Button variant="outline" onClick={addLanguage} className="w-full">
-                <Plus className="h-4 w-4 mr-1" /> Adicionar idioma
-              </Button>
+            <TabsContent value="languages" className="glass-card p-5 mt-4">
+              <LanguagesStep languages={languages} setLanguages={setLanguages} />
             </TabsContent>
           </Tabs>
         </div>
 
         {/* Preview */}
         <div className="lg:w-96 shrink-0">
-          <div className="sticky top-4 bg-foreground text-background rounded-xl p-6 space-y-4 text-sm">
-            <h2 className="text-lg font-bold border-b border-background/20 pb-2">{personal.name || "Seu Nome"}</h2>
-            <div className="text-xs space-y-0.5 text-background/70">
-              {personal.email && <p>{personal.email}</p>}
-              {personal.phone && <p>{personal.phone}</p>}
-              {personal.city && <p>{personal.city}</p>}
+          <div className="sticky top-4">
+            <div id="resume-preview" className="bg-white text-black rounded-xl p-6 space-y-4 text-sm">
+              <h2 className="text-lg font-bold border-b border-gray-200 pb-2">{personal.name || "Seu Nome"}</h2>
+              <div className="text-xs space-y-0.5 text-gray-500">
+                {personal.email && <p>{personal.email}</p>}
+                {personal.phone && <p>{personal.phone}</p>}
+                {personal.city && <p>{personal.city}</p>}
+              </div>
+              {objective && (
+                <div><h3 className="font-semibold text-xs uppercase tracking-wider mb-1">Objetivo</h3><p className="text-xs text-gray-700">{objective}</p></div>
+              )}
+              {experiences.length > 0 && (
+                <div>
+                  <h3 className="font-semibold text-xs uppercase tracking-wider mb-2">Experiência</h3>
+                  {experiences.map(e => (
+                    <div key={e.id} className="mb-2">
+                      <p className="font-medium text-xs">{e.role}{e.company ? ` — ${e.company}` : ""}</p>
+                      {e.period && <p className="text-xs text-gray-400">{e.period}</p>}
+                      {e.description && <p className="text-xs text-gray-600 mt-0.5 whitespace-pre-line">{e.description}</p>}
+                    </div>
+                  ))}
+                </div>
+              )}
+              {educations.length > 0 && (
+                <div>
+                  <h3 className="font-semibold text-xs uppercase tracking-wider mb-2">Formação</h3>
+                  {educations.map(e => (
+                    <div key={e.id} className="mb-1">
+                      <p className="font-medium text-xs">{e.course}{e.institution ? ` — ${e.institution}` : ""}</p>
+                      {e.period && <p className="text-xs text-gray-400">{e.period}</p>}
+                    </div>
+                  ))}
+                </div>
+              )}
+              {skills.length > 0 && (
+                <div>
+                  <h3 className="font-semibold text-xs uppercase tracking-wider mb-1">Habilidades</h3>
+                  <p className="text-xs text-gray-600">{skills.join(" • ")}</p>
+                </div>
+              )}
+              {languages.length > 0 && (
+                <div>
+                  <h3 className="font-semibold text-xs uppercase tracking-wider mb-1">Idiomas</h3>
+                  {languages.map((l, i) => (
+                    <p key={i} className="text-xs text-gray-600">{l.lang} — {l.level}</p>
+                  ))}
+                </div>
+              )}
             </div>
-            {objective && (
-              <div><h3 className="font-semibold text-xs uppercase tracking-wider mb-1">Objetivo</h3><p className="text-xs text-background/80">{objective}</p></div>
-            )}
-            {experiences.length > 0 && (
-              <div>
-                <h3 className="font-semibold text-xs uppercase tracking-wider mb-2">Experiência</h3>
-                {experiences.map(e => (
-                  <div key={e.id} className="mb-2">
-                    <p className="font-medium text-xs">{e.role}{e.company ? ` — ${e.company}` : ""}</p>
-                    {e.period && <p className="text-xs text-background/60">{e.period}</p>}
-                    {e.description && <p className="text-xs text-background/70 mt-0.5 whitespace-pre-line">{e.description}</p>}
-                  </div>
-                ))}
-              </div>
-            )}
-            {educations.length > 0 && (
-              <div>
-                <h3 className="font-semibold text-xs uppercase tracking-wider mb-2">Formação</h3>
-                {educations.map(e => (
-                  <div key={e.id} className="mb-1">
-                    <p className="font-medium text-xs">{e.course}{e.institution ? ` — ${e.institution}` : ""}</p>
-                    {e.period && <p className="text-xs text-background/60">{e.period}</p>}
-                  </div>
-                ))}
-              </div>
-            )}
-            {skills.length > 0 && (
-              <div>
-                <h3 className="font-semibold text-xs uppercase tracking-wider mb-1">Habilidades</h3>
-                <p className="text-xs text-background/70">{skills.join(" • ")}</p>
-              </div>
-            )}
-            <div className="flex gap-2 pt-2">
-              <Button size="sm" variant="secondary" className="text-xs flex-1" onClick={() => toast({ title: "Função de download em breve!" })}>
-                <Download className="h-3 w-3 mr-1" /> PDF
-              </Button>
-              <Button size="sm" variant="secondary" className="text-xs flex-1" onClick={() => toast({ title: "Função de download em breve!" })}>
-                <Download className="h-3 w-3 mr-1" /> DOCX
-              </Button>
+            <div className="mt-3">
+              <ResumeExport data={resumeData} />
             </div>
           </div>
         </div>

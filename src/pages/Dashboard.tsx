@@ -1,6 +1,9 @@
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { FileText, Linkedin, Target, Mic, ArrowRight, TrendingUp, Plus, Sparkles } from "lucide-react";
+import { FileText, Linkedin, Target, Mic, ArrowRight, TrendingUp, Sparkles } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import type { Profile } from "@/hooks/useAuth";
+import FabMenu from "@/components/FabMenu";
 import { Button } from "@/components/ui/button";
 import type { Profile } from "@/hooks/useAuth";
 
