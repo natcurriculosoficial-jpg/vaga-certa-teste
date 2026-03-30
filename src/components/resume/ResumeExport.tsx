@@ -43,7 +43,7 @@ export default function ResumeExport({ data }: ResumeExportProps) {
 
       const html2pdf = (await import("html2pdf.js")).default;
       const options = {
-        margin: [10, 10, 10, 10],
+        margin: [10, 10, 10, 10] as [number, number, number, number],
         filename: `curriculo-${data.name || "meu"}-${Date.now()}.pdf`,
         image: { type: "jpeg", quality: 0.98 },
         html2canvas: { scale: 2, useCORS: true, backgroundColor: "#ffffff" },
