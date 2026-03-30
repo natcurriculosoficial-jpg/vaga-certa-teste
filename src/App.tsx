@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Route, Routes, Navigate } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -21,7 +22,7 @@ import NotFound from "@/pages/NotFound";
 const queryClient = new QueryClient();
 
 function AppRoutes() {
-  const { user, loading, login, signup, updateUser, logout } = useAuth();
+  const { user, loading, login, signup, loginWithGoogle, updateProfile, logout } = useAuth();
 
   if (loading) {
     return (
@@ -34,31 +35,31 @@ function AppRoutes() {
   if (!user) {
     return (
       <Routes>
-        <Route path="/login" element={<Login onLogin={login} />} />
+        <Route path="/login" element={<Login onLogin={login} onGoogleLogin={loginWithGoogle} />} />
         <Route path="/signup" element={<Signup onSignup={signup} />} />
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
     );
   }
 
-  if (!user.onboardingComplete) {
+  if (!user.onboarding_complete) {
     return (
       <Routes>
-        <Route path="/onboarding" element={<Onboarding onUpdate={updateUser} />} />
+        <Route path="/onboarding" element={<Onboarding onUpdate={updateProfile} />} />
         <Route path="*" element={<Navigate to="/onboarding" replace />} />
       </Routes>
     );
   }
 
   return (
-    <AppLayout onLogout={() => { logout(); }}>
+    <AppLayout onLogout={logout}>
       <Routes>
         <Route path="/dashboard" element={<Dashboard user={user} />} />
         <Route path="/resume" element={<Resume user={user} />} />
         <Route path="/linkedin" element={<LinkedInPage user={user} />} />
         <Route path="/job-radar" element={<JobRadar />} />
         <Route path="/interview" element={<Interview user={user} />} />
-        <Route path="/profile" element={<Profile user={user} onUpdate={updateUser} />} />
+        <Route path="/profile" element={<Profile user={user} onUpdate={updateProfile} />} />
         <Route path="/settings" element={<SettingsPage onLogout={logout} />} />
         <Route path="/pricing" element={<Pricing />} />
         <Route path="/" element={<Navigate to="/dashboard" replace />} />
