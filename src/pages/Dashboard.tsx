@@ -4,9 +4,6 @@ import { FileText, Linkedin, Target, Mic, ArrowRight, TrendingUp, Sparkles } fro
 import { Button } from "@/components/ui/button";
 import type { Profile } from "@/hooks/useAuth";
 import FabMenu from "@/components/FabMenu";
-import { Button } from "@/components/ui/button";
-import type { Profile } from "@/hooks/useAuth";
-
 const progressCards = [
   { label: "Currículo", icon: FileText, value: "25%", color: "text-secondary" },
   { label: "LinkedIn", icon: Linkedin, value: "0%", color: "text-secondary" },
