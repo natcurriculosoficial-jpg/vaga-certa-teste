@@ -1,51 +1,178 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
+import { useSearchParams } from "react-router-dom";
+import { motion } from "framer-motion";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Search, ExternalLink, Sparkles, Loader2, GripVertical } from "lucide-react";
+import { ExternalLink, Sparkles, Loader2, Download, Bell, Search as SearchIcon, Plus } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { Textarea } from "@/components/ui/textarea";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { supabase } from "@/integrations/supabase/client";
 import * as geminiService from "@/services/gemini";
-
-interface Job {
-  id: string; title: string; company: string; location: string; type: string; source: string; url: string;
-  status: "saved" | "applied" | "process" | "interview" | "rejected";
-}
-
-const sampleJobs: Job[] = [
-  { id: "1", title: "Analista de Marketing Digital", company: "TechCorp", location: "São Paulo", type: "Remoto", source: "LinkedIn", url: "#", status: "saved" },
-  { id: "2", title: "Desenvolvedor Full Stack", company: "StartupXYZ", location: "Rio de Janeiro", type: "Híbrido", source: "Indeed", url: "#", status: "saved" },
-  { id: "3", title: "Product Manager", company: "InovaTech", location: "Curitiba", type: "Presencial", source: "Catho", url: "#", status: "applied" },
-  { id: "4", title: "UX Designer Sênior", company: "DesignLab", location: "Florianópolis", type: "Remoto", source: "LinkedIn", url: "#", status: "process" },
-  { id: "5", title: "Data Analyst", company: "DataDriven", location: "Belo Horizonte", type: "Remoto", source: "Indeed", url: "#", status: "saved" },
-];
+import JobFilterPanel, { type JobFilters, EMPTY_FILTERS, classifyJob, TierBadge, getActiveFilterCount } from "@/components/jobs/JobFilters";
+import JobKanban, { type KanbanJob } from "@/components/jobs/JobKanban";
+import JobAlertsPanel, { useJobAlerts, AlertBadge } from "@/components/jobs/JobAlerts";
+import { Input } from "@/components/ui/input";
 
 const statusLabels: Record<string, string> = {
-  saved: "Salvas", applied: "Aplicadas", process: "Em processo", interview: "Entrevista", rejected: "Rejeitadas"
-};
-const statusColors: Record<string, string> = {
-  saved: "border-secondary/30 bg-secondary/5", applied: "border-primary/30 bg-primary/5",
-  process: "border-warning/30 bg-warning/5", interview: "border-success/30 bg-success/5",
-  rejected: "border-destructive/30 bg-destructive/5"
+  saved: "Salvas", applied: "Candidatei", process: "Em análise",
+  interview: "Entrevista", offer: "Oferta", archived: "Arquivado",
 };
 
 export default function JobRadar() {
-  const [jobs, setJobs] = useState<Job[]>(sampleJobs);
-  const [search, setSearch] = useState("");
-  const [typeFilter, setTypeFilter] = useState("all");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const [jobs, setJobs] = useState<KanbanJob[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [filters, setFilters] = useState<JobFilters>(() => ({
+    query: searchParams.get("q") || "",
+    city: searchParams.get("city") || "",
+    type: searchParams.get("type") || "all",
+    salary: searchParams.get("salary") || "all",
+    regime: searchParams.get("regime") || "all",
+  }));
+
+  // External search
+  const [extQuery, setExtQuery] = useState("");
+  const [extCity, setExtCity] = useState("");
+  const [extResults, setExtResults] = useState<any[]>([]);
+  const [extLoading, setExtLoading] = useState(false);
+
+  // Match IA
   const [matchResult, setMatchResult] = useState("");
   const [matchLoading, setMatchLoading] = useState(false);
   const [jobDesc, setJobDesc] = useState("");
 
-  const filtered = jobs.filter(j =>
-    (j.title.toLowerCase().includes(search.toLowerCase()) || j.company.toLowerCase().includes(search.toLowerCase())) &&
-    (typeFilter === "all" || j.type === typeFilter)
-  );
+  // Alerts
+  const { savedSearches, newJobCount, addSearch, removeSearch, clearNew } = useJobAlerts();
 
-  const moveJob = (id: string, newStatus: Job["status"]) => {
+  // Persist filters to URL with debounce
+  useEffect(() => {
+    const timeout = setTimeout(() => {
+      const params = new URLSearchParams();
+      if (filters.query) params.set("q", filters.query);
+      if (filters.city) params.set("city", filters.city);
+      if (filters.type !== "all") params.set("type", filters.type);
+      if (filters.salary !== "all") params.set("salary", filters.salary);
+      if (filters.regime !== "all") params.set("regime", filters.regime);
+      setSearchParams(params, { replace: true });
+    }, 400);
+    return () => clearTimeout(timeout);
+  }, [filters, setSearchParams]);
+
+  // Load saved jobs from database
+  useEffect(() => {
+    const loadJobs = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const { data, error } = await supabase
+        .from("saved_jobs")
+        .select("*")
+        .eq("user_id", user.id)
+        .order("created_at", { ascending: false });
+
+      if (!error && data) {
+        setJobs(data.map(j => ({
+          id: j.id,
+          title: j.title,
+          company: j.company,
+          location: j.location,
+          type: j.type,
+          url: j.url,
+          notes: j.notes,
+          status: j.status,
+          created_at: j.created_at,
+          updated_at: j.updated_at,
+        })));
+      }
+      setLoading(false);
+    };
+    loadJobs();
+  }, []);
+
+  // Filter jobs for search tab
+  const filtered = useMemo(() => {
+    return jobs.filter(j => {
+      if (filters.query && !j.title.toLowerCase().includes(filters.query.toLowerCase()) && !j.company.toLowerCase().includes(filters.query.toLowerCase())) return false;
+      if (filters.city && j.location && !j.location.toLowerCase().includes(filters.city.toLowerCase())) return false;
+      if (filters.type !== "all" && j.type !== filters.type) return false;
+      return true;
+    }).map(j => ({
+      ...j,
+      tier: classifyJob(j, filters),
+    })).sort((a, b) => {
+      const order = { gold: 0, silver: 1, bronze: 2 };
+      const ta = a.tier ? order[a.tier] : 3;
+      const tb = b.tier ? order[b.tier] : 3;
+      return ta - tb;
+    });
+  }, [jobs, filters]);
+
+  const moveJob = useCallback(async (id: string, newStatus: string) => {
     setJobs(p => p.map(j => j.id === id ? { ...j, status: newStatus } : j));
-    toast({ title: `Vaga movida para ${statusLabels[newStatus]}` });
+    const { error } = await supabase.from("saved_jobs").update({ status: newStatus }).eq("id", id);
+    if (error) {
+      toast({ title: "Erro ao mover vaga", variant: "destructive" });
+    } else {
+      toast({ title: `Vaga movida para ${statusLabels[newStatus] || newStatus}` });
+    }
+  }, []);
+
+  const updateNotes = useCallback(async (id: string, notes: string) => {
+    setJobs(p => p.map(j => j.id === id ? { ...j, notes } : j));
+    await supabase.from("saved_jobs").update({ notes }).eq("id", id);
+    toast({ title: "Notas salvas!" });
+  }, []);
+
+  const saveExternalJob = useCallback(async (job: any) => {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return;
+
+    const { data, error } = await supabase.from("saved_jobs").insert({
+      user_id: user.id,
+      title: job.title,
+      company: job.company,
+      location: job.location,
+      type: job.type,
+      url: job.url,
+      description: job.description,
+      status: "saved",
+    }).select().single();
+
+    if (!error && data) {
+      setJobs(prev => [{
+        id: data.id,
+        title: data.title,
+        company: data.company,
+        location: data.location,
+        type: data.type,
+        url: data.url,
+        notes: data.notes,
+        status: data.status,
+        created_at: data.created_at,
+        updated_at: data.updated_at,
+      }, ...prev]);
+      toast({ title: "✅ Vaga salva no seu tracker!" });
+    }
+  }, []);
+
+  const searchExternal = async () => {
+    if (!extQuery) return;
+    setExtLoading(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("search-jobs", {
+        body: { query: extQuery, location: extCity || undefined },
+      });
+      if (!error && data?.jobs) {
+        setExtResults(data.jobs);
+        if (data.jobs.length === 0) toast({ title: "Nenhuma vaga encontrada para essa busca" });
+      } else {
+        toast({ title: "Erro na busca", variant: "destructive" });
+      }
+    } catch {
+      toast({ title: "Erro na busca externa", variant: "destructive" });
+    }
+    setExtLoading(false);
   };
 
   const analyzeMatch = async () => {
@@ -58,7 +185,7 @@ export default function JobRadar() {
 
   const exportCSV = () => {
     const header = "Título,Empresa,Local,Tipo,Status\n";
-    const rows = jobs.map(j => `${j.title},${j.company},${j.location},${j.type},${statusLabels[j.status]}`).join("\n");
+    const rows = jobs.map(j => `"${j.title}","${j.company}","${j.location || ""}","${j.type || ""}","${statusLabels[j.status] || j.status}"`).join("\n");
     const blob = new Blob([header + rows], { type: "text/csv" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -67,90 +194,172 @@ export default function JobRadar() {
   };
 
   return (
-    <div className="p-4 md:p-8 max-w-6xl mx-auto space-y-6">
+    <motion.div
+      initial={{ opacity: 0, y: 12 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="p-4 md:p-8 max-w-7xl mx-auto space-y-6"
+    >
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-foreground">🎯 Radar de Vagas</h1>
-          <p className="text-muted-foreground">Encontre e acompanhe suas candidaturas</p>
+          <p className="text-muted-foreground text-sm">Encontre, acompanhe e gerencie suas candidaturas</p>
         </div>
-        <Button variant="outline" size="sm" onClick={exportCSV}>Exportar CSV</Button>
+        <div className="flex gap-2">
+          <Button variant="outline" size="sm" onClick={exportCSV} className="gap-1">
+            <Download className="h-3 w-3" /> CSV
+          </Button>
+        </div>
       </div>
 
       <Tabs defaultValue="search">
         <TabsList className="bg-muted/50">
-          <TabsTrigger value="search">Buscar</TabsTrigger>
-          <TabsTrigger value="tracker">Tracker</TabsTrigger>
+          <TabsTrigger value="search">Minhas Vagas</TabsTrigger>
+          <TabsTrigger value="external" className="gap-1">
+            <SearchIcon className="h-3 w-3" /> Buscar
+          </TabsTrigger>
+          <TabsTrigger value="tracker">Kanban</TabsTrigger>
           <TabsTrigger value="match">Match IA</TabsTrigger>
+          <TabsTrigger value="alerts" className="relative gap-1">
+            <Bell className="h-3 w-3" /> Alertas
+            <AlertBadge count={newJobCount} />
+          </TabsTrigger>
         </TabsList>
 
+        {/* My Jobs with filters */}
         <TabsContent value="search" className="space-y-4 mt-4">
-          <div className="flex flex-col md:flex-row gap-3">
-            <div className="flex-1 relative">
-              <Search className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-              <Input value={search} onChange={e => setSearch(e.target.value)} placeholder="Buscar cargo ou empresa..." className="pl-10 bg-muted/50" />
+          <JobFilterPanel filters={filters} onChange={setFilters} />
+
+          {loading ? (
+            <div className="flex items-center justify-center py-16">
+              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
             </div>
-            <Select value={typeFilter} onValueChange={setTypeFilter}>
-              <SelectTrigger className="w-full md:w-40 bg-muted/50"><SelectValue placeholder="Tipo" /></SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">Todos</SelectItem>
-                <SelectItem value="Remoto">Remoto</SelectItem>
-                <SelectItem value="Presencial">Presencial</SelectItem>
-                <SelectItem value="Híbrido">Híbrido</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="space-y-3">
-            {filtered.length === 0 && <div className="glass-card p-8 text-center text-muted-foreground">Nenhuma vaga encontrada</div>}
-            {filtered.map(job => (
-              <div key={job.id} className="glass-card p-4 flex flex-col md:flex-row md:items-center gap-3">
-                <div className="flex-1">
-                  <h3 className="font-semibold text-foreground">{job.title}</h3>
-                  <p className="text-sm text-muted-foreground">{job.company} • {job.location}</p>
-                  <div className="flex gap-2 mt-1">
-                    <span className="text-xs px-2 py-0.5 rounded-full border border-border text-muted-foreground">{job.type}</span>
-                    <span className="text-xs px-2 py-0.5 rounded-full border border-border text-muted-foreground">{job.source}</span>
-                  </div>
+          ) : (
+            <div className="space-y-3">
+              {filtered.length === 0 && (
+                <div className="glass-card p-8 text-center text-muted-foreground space-y-2">
+                  <p>Nenhuma vaga encontrada</p>
+                  <p className="text-xs">Use a aba "Buscar" para encontrar vagas em sites externos</p>
                 </div>
-                <div className="flex gap-2">
-                  <Select value={job.status} onValueChange={(v) => moveJob(job.id, v as Job["status"])}>
-                    <SelectTrigger className="w-32 text-xs bg-muted/50"><SelectValue /></SelectTrigger>
-                    <SelectContent>
-                      {Object.entries(statusLabels).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}
-                    </SelectContent>
-                  </Select>
-                  <Button size="sm" variant="outline" asChild>
-                    <a href={job.url} target="_blank" rel="noopener noreferrer"><ExternalLink className="h-3 w-3" /></a>
-                  </Button>
-                </div>
-              </div>
-            ))}
-          </div>
-        </TabsContent>
-
-        <TabsContent value="tracker" className="mt-4">
-          <div className="grid grid-cols-1 md:grid-cols-5 gap-3">
-            {(Object.keys(statusLabels) as Array<Job["status"]>).map(status => (
-              <div key={status} className="space-y-2">
-                <h3 className="text-sm font-semibold text-muted-foreground flex items-center gap-2">
-                  <GripVertical className="h-3 w-3" /> {statusLabels[status]} ({jobs.filter(j => j.status === status).length})
-                </h3>
-                <div className="space-y-2 min-h-[100px]">
-                  {jobs.filter(j => j.status === status).map(job => (
-                    <div key={job.id} className={`p-3 rounded-lg border ${statusColors[status]}`}>
-                      <p className="text-xs font-medium text-foreground">{job.title}</p>
-                      <p className="text-xs text-muted-foreground">{job.company}</p>
+              )}
+              {filtered.map(job => (
+                <motion.div
+                  key={job.id}
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="glass-card p-4 flex flex-col md:flex-row md:items-center gap-3"
+                >
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2">
+                      <h3 className="font-semibold text-foreground text-sm">{job.title}</h3>
+                      <TierBadge tier={job.tier} />
                     </div>
-                  ))}
-                </div>
-              </div>
-            ))}
-          </div>
+                    <p className="text-xs text-muted-foreground mt-0.5">{job.company} • {job.location}</p>
+                    <div className="flex gap-2 mt-1.5">
+                      {job.type && <span className="text-[10px] px-2 py-0.5 rounded-full border border-border text-muted-foreground">{job.type}</span>}
+                    </div>
+                  </div>
+                  <div className="flex gap-2 items-center">
+                    <Select value={job.status} onValueChange={(v) => moveJob(job.id, v)}>
+                      <SelectTrigger className="w-32 text-xs bg-muted/50 h-8"><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        {Object.entries(statusLabels).map(([k, v]) => <SelectItem key={k} value={k}>{v}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                    {job.url && (
+                      <Button size="sm" variant="outline" className="h-8 w-8 p-0" asChild>
+                        <a href={job.url} target="_blank" rel="noopener noreferrer"><ExternalLink className="h-3 w-3" /></a>
+                      </Button>
+                    )}
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          )}
         </TabsContent>
 
+        {/* External Search */}
+        <TabsContent value="external" className="space-y-4 mt-4">
+          <div className="glass-card p-5 space-y-4">
+            <h3 className="font-semibold text-foreground text-sm">🔍 Buscar vagas em sites externos</h3>
+            <p className="text-xs text-muted-foreground">Busca em portais como Gupy, Indeed e outros.</p>
+            <div className="flex flex-col md:flex-row gap-3">
+              <Input
+                value={extQuery}
+                onChange={e => setExtQuery(e.target.value)}
+                placeholder="Cargo (ex: Desenvolvedor React)"
+                className="bg-muted/50"
+              />
+              <Input
+                value={extCity}
+                onChange={e => setExtCity(e.target.value)}
+                placeholder="Cidade (opcional)"
+                className="bg-muted/50 md:w-48"
+              />
+              <Button onClick={searchExternal} disabled={extLoading || !extQuery} className="gap-1">
+                {extLoading ? <Loader2 className="h-4 w-4 animate-spin" /> : <SearchIcon className="h-4 w-4" />}
+                Buscar
+              </Button>
+            </div>
+          </div>
+
+          {extResults.length > 0 && (
+            <div className="space-y-3">
+              <p className="text-xs text-muted-foreground">{extResults.length} vagas encontradas</p>
+              {extResults.map((job: any) => (
+                <motion.div
+                  key={job.id}
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="glass-card p-4 flex flex-col md:flex-row md:items-center gap-3"
+                >
+                  <div className="flex-1">
+                    <h3 className="font-semibold text-foreground text-sm">{job.title}</h3>
+                    <p className="text-xs text-muted-foreground mt-0.5">{job.company} • {job.location}</p>
+                    <div className="flex gap-2 mt-1.5">
+                      <span className="text-[10px] px-2 py-0.5 rounded-full border border-border text-muted-foreground">{job.type}</span>
+                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">{job.source}</span>
+                    </div>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button size="sm" variant="outline" className="h-8 gap-1" onClick={() => saveExternalJob(job)}>
+                      <Plus className="h-3 w-3" /> Salvar
+                    </Button>
+                    <Button size="sm" variant="outline" className="h-8 w-8 p-0" asChild>
+                      <a href={job.url} target="_blank" rel="noopener noreferrer"><ExternalLink className="h-3 w-3" /></a>
+                    </Button>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          )}
+        </TabsContent>
+
+        {/* Kanban */}
+        <TabsContent value="tracker" className="mt-4">
+          {loading ? (
+            <div className="flex items-center justify-center py-16">
+              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+            </div>
+          ) : jobs.length === 0 ? (
+            <div className="glass-card p-8 text-center text-muted-foreground space-y-2">
+              <p>Nenhuma vaga no tracker ainda</p>
+              <p className="text-xs">Busque vagas na aba "Buscar" e salve para acompanhar aqui</p>
+            </div>
+          ) : (
+            <JobKanban jobs={jobs} onMoveJob={moveJob} onUpdateNotes={updateNotes} />
+          )}
+        </TabsContent>
+
+        {/* Match IA */}
         <TabsContent value="match" className="mt-4 space-y-4">
           <div className="glass-card p-5 space-y-4">
             <h3 className="font-semibold text-foreground">Analisar compatibilidade com IA</h3>
-            <Textarea value={jobDesc} onChange={e => setJobDesc(e.target.value)} placeholder="Cole a descrição da vaga aqui..." className="bg-muted/50 min-h-[150px]" />
+            <Textarea
+              value={jobDesc}
+              onChange={e => setJobDesc(e.target.value)}
+              placeholder="Cole a descrição da vaga aqui..."
+              className="bg-muted/50 min-h-[150px]"
+            />
             <Button onClick={analyzeMatch} disabled={matchLoading || !jobDesc}>
               {matchLoading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : <Sparkles className="h-4 w-4 mr-2" />}
               Analisar compatibilidade
@@ -160,7 +369,16 @@ export default function JobRadar() {
             )}
           </div>
         </TabsContent>
+
+        {/* Alerts */}
+        <TabsContent value="alerts" className="mt-4">
+          <JobAlertsPanel
+            savedSearches={savedSearches}
+            onAdd={addSearch}
+            onRemove={removeSearch}
+          />
+        </TabsContent>
       </Tabs>
-    </div>
+    </motion.div>
   );
 }
