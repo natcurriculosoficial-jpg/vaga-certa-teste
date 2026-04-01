@@ -31,9 +31,6 @@ const NAV_BOTTOM = [
   { label: "Configurações", icon: Settings, path: "/settings" },
 ];
 
-const COLLAPSED_W = 64;
-const EXPANDED_W = 228;
-
 export default function AppLayout({
   children,
   onLogout,
@@ -69,33 +66,35 @@ export default function AppLayout({
     };
 
     const colorClasses = variant === "warning"
-      ? "text-amber-400 hover:bg-amber-400/10"
+      ? "text-amber-400 hover:text-amber-300 hover:bg-amber-400/15"
       : variant === "danger"
-      ? "text-red-400 hover:bg-red-400/10"
+      ? "text-red-400 hover:text-red-300 hover:bg-red-400/15"
       : active
-      ? "text-white vc-sidebar-pill"
-      : "text-white/40 hover:text-white/80 hover:bg-white/[0.06]";
+      ? "bg-white/10 text-white"
+      : "text-white/40 hover:text-white hover:bg-primary/25";
 
     const button = (
       <button
         onClick={handleClick}
-        className={`relative w-full flex items-center gap-3 rounded-[10px] text-sm font-medium transition-all duration-200 ${
-          collapsed ? "px-0 py-2.5 justify-center" : "px-3 py-2.5"
+        className={`relative flex items-center transition-all duration-150 ${
+          collapsed
+            ? "w-10 h-10 justify-center rounded-[10px] mx-auto"
+            : "w-full px-3 py-2.5 rounded-[10px] gap-3"
         } ${colorClasses}`}
       >
-        <Icon className="h-[18px] w-[18px] shrink-0" />
+        <Icon className="h-5 w-5 shrink-0" strokeWidth={1.5} />
         {!collapsed && (
           <motion.span
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.05 }}
-            className="truncate"
+            className="truncate text-sm font-medium"
           >
             {label}
           </motion.span>
         )}
         {badge != null && badge > 0 && (
-          <span className="absolute top-1 right-1 min-w-[18px] h-[18px] rounded-full bg-red-500 text-white text-[10px] font-bold flex items-center justify-center px-1">
+          <span className="absolute top-0 right-0 min-w-[16px] h-[16px] rounded-full bg-red-500 text-white text-[9px] font-bold flex items-center justify-center px-1">
             {badge > 9 ? "9+" : badge}
           </span>
         )}
@@ -106,7 +105,7 @@ export default function AppLayout({
       return (
         <Tooltip>
           <TooltipTrigger asChild>{button}</TooltipTrigger>
-          <TooltipContent side="right" className="font-medium">
+          <TooltipContent side="right" className="text-xs font-medium ml-1">
             {label}
           </TooltipContent>
         </Tooltip>
@@ -116,62 +115,66 @@ export default function AppLayout({
     return button;
   };
 
-  const SidebarContent = ({ isMobile = false }: { isMobile?: boolean }) => (
-    <div className="flex flex-col h-full bg-[hsl(220,25%,7%)] text-white">
-      {/* Logo */}
-      <div className={`flex items-center border-b border-white/[0.06] ${collapsed && !isMobile ? "justify-center p-4" : "px-5 py-4"}`}>
-        {collapsed && !isMobile ? (
-          <div className="w-8 h-8 rounded-lg gradient-primary flex items-center justify-center">
-            <span className="text-xs font-bold text-white">VC</span>
+  const SidebarContent = ({ isMobile = false }: { isMobile?: boolean }) => {
+    const isCollapsed = isMobile ? false : collapsed;
+
+    return (
+      <div className="flex flex-col h-full bg-[hsl(220,25%,7%)] text-white">
+        {/* Logo */}
+        <div className={`flex items-center border-b border-white/[0.06] ${isCollapsed ? "justify-center py-4 px-2" : "px-5 py-4"}`}>
+          {isCollapsed ? (
+            <div className="w-9 h-9 rounded-[10px] gradient-primary flex items-center justify-center">
+              <span className="text-xs font-bold text-white">VC</span>
+            </div>
+          ) : (
+            <Logo size="sm" />
+          )}
+        </div>
+
+        {/* Main nav */}
+        <nav className="flex-1 px-2 py-3 space-y-1 overflow-y-auto">
+          {NAV_MAIN.map(navItem => (
+            <SidebarItem key={navItem.path} icon={navItem.icon} label={navItem.label} path={navItem.path} />
+          ))}
+        </nav>
+
+        {/* Bottom */}
+        <div className="px-2 py-3 border-t border-white/[0.06] space-y-1">
+          {NAV_BOTTOM.map(navItem => (
+            <SidebarItem key={navItem.path} icon={navItem.icon} label={navItem.label} path={navItem.path} />
+          ))}
+          <SidebarItem
+            icon={Crown}
+            label="Upgrade PRO"
+            onClick={() => navigate("/pricing")}
+            variant="warning"
+          />
+          <div className="pt-1 mt-1 border-t border-white/[0.06]">
+            <SidebarItem icon={LogOut} label="Sair" onClick={onLogout} variant="danger" />
           </div>
-        ) : (
-          <Logo size="sm" />
+        </div>
+
+        {/* Collapse toggle (desktop only) */}
+        {!isMobile && (
+          <button
+            onClick={() => setCollapsed(c => !c)}
+            className="flex items-center justify-center py-3 border-t border-white/[0.06] text-white/30 hover:text-white/70 transition-colors duration-200"
+          >
+            {collapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
+          </button>
         )}
       </div>
-
-      {/* Main nav */}
-      <nav className="flex-1 p-2 space-y-0.5 overflow-y-auto">
-        {NAV_MAIN.map(item => (
-          <SidebarItem key={item.path} icon={item.icon} label={item.label} path={item.path} />
-        ))}
-      </nav>
-
-      {/* Bottom */}
-      <div className="p-2 border-t border-white/[0.06] space-y-0.5">
-        {NAV_BOTTOM.map(item => (
-          <SidebarItem key={item.path} icon={item.icon} label={item.label} path={item.path} />
-        ))}
-        <SidebarItem
-          icon={Crown}
-          label="Upgrade PRO"
-          onClick={() => navigate("/pricing")}
-          variant="warning"
-        />
-        <div className="pt-1 mt-1 border-t border-white/[0.06]">
-          <SidebarItem icon={LogOut} label="Sair" onClick={onLogout} variant="danger" />
-        </div>
-      </div>
-
-      {/* Collapse toggle (desktop only) */}
-      {!isMobile && (
-        <button
-          onClick={() => setCollapsed(c => !c)}
-          className="flex items-center justify-center py-3 border-t border-white/[0.06] text-white/30 hover:text-white/70 transition-colors duration-200"
-        >
-          {collapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
-        </button>
-      )}
-    </div>
-  );
+    );
+  };
 
   return (
-    <TooltipProvider delayDuration={200}>
+    <TooltipProvider delayDuration={150}>
       <div className="min-h-screen flex bg-background">
         {/* Desktop Sidebar */}
         <motion.aside
           initial={false}
-          animate={{ width: collapsed ? COLLAPSED_W : EXPANDED_W }}
-          transition={{ duration: 0.2, ease: "easeInOut" }}
+          animate={{ width: collapsed ? 64 : 228 }}
+          transition={{ duration: 0.22, ease: [0.4, 0, 0.2, 1] }}
           className="hidden md:flex flex-col fixed h-full z-30 overflow-hidden"
         >
           <SidebarContent />
@@ -180,8 +183,8 @@ export default function AppLayout({
         {/* Desktop main */}
         <motion.main
           initial={false}
-          animate={{ marginLeft: collapsed ? COLLAPSED_W : EXPANDED_W }}
-          transition={{ duration: 0.2, ease: "easeInOut" }}
+          animate={{ marginLeft: collapsed ? 64 : 228 }}
+          transition={{ duration: 0.22, ease: [0.4, 0, 0.2, 1] }}
           className="flex-1 hidden md:block"
         >
           {/* Topbar */}
@@ -273,18 +276,18 @@ export default function AppLayout({
 
         {/* Bottom nav mobile */}
         <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-background/90 backdrop-blur-xl border-t border-border/50 z-20 flex justify-around py-2 px-1">
-          {NAV_MAIN.map(item => {
-            const active = location.pathname === item.path;
+          {NAV_MAIN.map(navItem => {
+            const active = location.pathname === navItem.path;
             return (
               <button
-                key={item.path}
-                onClick={() => navigate(item.path)}
+                key={navItem.path}
+                onClick={() => navigate(navItem.path)}
                 className={`relative flex flex-col items-center gap-0.5 px-3 py-1 rounded-lg transition-colors duration-200 ${
                   active ? "text-primary" : "text-muted-foreground"
                 }`}
               >
-                <item.icon className="h-5 w-5" />
-                <span className="text-[10px] truncate max-w-[56px]">{item.label.split(" ")[0]}</span>
+                <navItem.icon className="h-5 w-5" />
+                <span className="text-[10px] truncate max-w-[56px]">{navItem.label.split(" ")[0]}</span>
                 {active && (
                   <motion.div
                     layoutId="mobileActive"
