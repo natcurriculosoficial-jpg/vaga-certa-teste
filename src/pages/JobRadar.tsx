@@ -465,7 +465,15 @@ export default function JobRadar() {
                     <p className="text-xs text-muted-foreground mt-0.5">{job.company} • {job.location}</p>
                     <div className="flex gap-2 mt-1.5">
                       <span className="text-[10px] px-2 py-0.5 rounded-full border border-border text-muted-foreground">{job.type}</span>
-                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">{job.source}</span>
+                      {job.source === "LinkedIn" && (
+                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-sky-500/10 text-sky-600 border border-sky-500/20">LinkedIn</span>
+                      )}
+                      {job.source === "Gupy" && (
+                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">Gupy</span>
+                      )}
+                      {job.source !== "LinkedIn" && job.source !== "Gupy" && job.source && (
+                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">{job.source}</span>
+                      )}
                     </div>
                   </div>
                   <div className="flex gap-2">
