@@ -200,17 +200,28 @@ export default function JobRadar() {
   const searchExternal = async () => {
     if (!extQuery) return;
     setExtLoading(true);
+    setExtResults([]);
     try {
-      const { data, error } = await supabase.functions.invoke("search-jobs", {
-        body: { query: extQuery, location: extCity || undefined },
-      });
-      if (!error && data?.jobs) {
-        setExtResults(data.jobs);
-        if (data.jobs.length === 0) toast({ title: "Nenhuma vaga encontrada para essa busca" });
-      } else {
-        console.error("Search error:", error);
-        toast({ title: "Erro na busca", description: "Tente novamente em alguns segundos", variant: "destructive" });
+      const [mainRes, linkedinRes] = await Promise.allSettled([
+        supabase.functions.invoke("search-jobs", {
+          body: { query: extQuery, location: extCity || undefined },
+        }),
+        supabase.functions.invoke("search-linkedin-jobs", {
+          body: { query: extQuery, location: extCity || "Brasil" },
+        }),
+      ]);
+
+      let allJobs: any[] = [];
+
+      if (linkedinRes.status === "fulfilled" && linkedinRes.value.data?.jobs) {
+        allJobs.push(...linkedinRes.value.data.jobs.map((j: any) => ({ ...j, source: j.source || "LinkedIn" })));
       }
+      if (mainRes.status === "fulfilled" && mainRes.value.data?.jobs) {
+        allJobs.push(...mainRes.value.data.jobs.map((j: any) => ({ ...j, source: j.source || "Gupy" })));
+      }
+
+      setExtResults(allJobs);
+      if (allJobs.length === 0) toast({ title: "Nenhuma vaga encontrada para essa busca" });
     } catch {
       toast({ title: "Erro na busca externa", variant: "destructive" });
     }
@@ -454,7 +465,15 @@ export default function JobRadar() {
                     <p className="text-xs text-muted-foreground mt-0.5">{job.company} • {job.location}</p>
                     <div className="flex gap-2 mt-1.5">
                       <span className="text-[10px] px-2 py-0.5 rounded-full border border-border text-muted-foreground">{job.type}</span>
-                      <span className="text-[10px] px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">{job.source}</span>
+                      {job.source === "LinkedIn" && (
+                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-sky-500/10 text-sky-600 border border-sky-500/20">LinkedIn</span>
+                      )}
+                      {job.source === "Gupy" && (
+                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">Gupy</span>
+                      )}
+                      {job.source !== "LinkedIn" && job.source !== "Gupy" && job.source && (
+                        <span className="text-[10px] px-2 py-0.5 rounded-full bg-primary/10 text-primary border border-primary/20">{job.source}</span>
+                      )}
                     </div>
                   </div>
                   <div className="flex gap-2">
