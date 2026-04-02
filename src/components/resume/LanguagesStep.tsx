@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Check, Plus, Trash2, ChevronDown } from "lucide-react";
+import { Check, Plus, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 
@@ -14,48 +14,48 @@ const TOP_LANGUAGES = [
 
 const LEVELS = ["Básico", "Intermediário", "Avançado", "Fluente", "Nativo"];
 
-interface LanguageEntry {
-  lang: string;
+interface LanguageItem {
+  id: string;
+  language: string;
   level: string;
 }
 
 interface LanguagesStepProps {
-  languages: LanguageEntry[];
-  setLanguages: React.Dispatch<React.SetStateAction<LanguageEntry[]>>;
+  languages: LanguageItem[];
+  onAddLanguage: (language: string, level: string) => Promise<void>;
+  onRemoveLanguage: (id: string) => Promise<void>;
+  onUpdateLevel: (id: string, level: string) => Promise<void>;
 }
 
-export default function LanguagesStep({ languages, setLanguages }: LanguagesStepProps) {
+export default function LanguagesStep({ languages, onAddLanguage, onRemoveLanguage, onUpdateLevel }: LanguagesStepProps) {
   const [showCustomInput, setShowCustomInput] = useState(false);
   const [customLang, setCustomLang] = useState("");
   const [expandedCard, setExpandedCard] = useState<string | null>(null);
 
-  const isSelected = (name: string) => languages.some((l) => l.lang === name);
+  const isSelected = (name: string) => languages.some((l) => l.language === name);
 
   const toggleTopLang = (name: string) => {
     if (isSelected(name)) {
-      setLanguages((p) => p.filter((l) => l.lang !== name));
+      const lang = languages.find(l => l.language === name);
+      if (lang) onRemoveLanguage(lang.id);
       setExpandedCard(null);
     } else {
       setExpandedCard(name);
     }
   };
 
-  const selectLevel = (name: string, level: string) => {
-    setLanguages((p) => [...p.filter((l) => l.lang !== name), { lang: name, level }]);
+  const selectLevel = async (name: string, level: string) => {
+    await onAddLanguage(name, level);
     setExpandedCard(null);
   };
 
-  const addCustom = () => {
+  const addCustom = async () => {
     const trimmed = customLang.trim();
     if (trimmed && !isSelected(trimmed)) {
-      setLanguages((p) => [...p, { lang: trimmed, level: "Básico" }]);
+      await onAddLanguage(trimmed, "Básico");
       setCustomLang("");
       setShowCustomInput(false);
     }
-  };
-
-  const updateLevel = (lang: string, level: string) => {
-    setLanguages((p) => p.map((l) => (l.lang === lang ? { ...l, level } : l)));
   };
 
   return (
@@ -95,7 +95,6 @@ export default function LanguagesStep({ languages, setLanguages }: LanguagesStep
                   )}
                 </motion.button>
 
-                {/* Level dropdown */}
                 <AnimatePresence>
                   {expanded && !selected && (
                     <motion.div
@@ -130,18 +129,18 @@ export default function LanguagesStep({ languages, setLanguages }: LanguagesStep
           <div className="space-y-2">
             {languages.map((l) => (
               <motion.div
-                key={l.lang}
+                key={l.id}
                 layout
                 initial={{ opacity: 0, x: -10 }}
                 animate={{ opacity: 1, x: 0 }}
                 className="glass-card p-3 flex items-center justify-between gap-3"
               >
                 <div className="flex items-center gap-2 flex-1 min-w-0">
-                  <span className="font-medium text-sm text-foreground truncate">{l.lang}</span>
+                  <span className="font-medium text-sm text-foreground truncate">{l.language}</span>
                   <span className="text-muted-foreground text-xs">—</span>
                   <select
                     value={l.level}
-                    onChange={(e) => updateLevel(l.lang, e.target.value)}
+                    onChange={(e) => onUpdateLevel(l.id, e.target.value)}
                     className="bg-muted/50 border border-input rounded-lg px-2 py-1 text-xs text-foreground focus:outline-none focus:ring-1 focus:ring-secondary"
                   >
                     {LEVELS.map((lv) => (
@@ -153,7 +152,7 @@ export default function LanguagesStep({ languages, setLanguages }: LanguagesStep
                   size="icon"
                   variant="ghost"
                   className="h-7 w-7 shrink-0"
-                  onClick={() => setLanguages((p) => p.filter((ll) => ll.lang !== l.lang))}
+                  onClick={() => onRemoveLanguage(l.id)}
                 >
                   <Trash2 className="h-3.5 w-3.5 text-destructive" />
                 </Button>

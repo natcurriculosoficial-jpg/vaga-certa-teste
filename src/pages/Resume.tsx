@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -7,40 +7,220 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Plus, Trash2, Sparkles, Loader2 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { UserData } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
 import * as gemini from "@/services/gemini";
 import LanguagesStep from "@/components/resume/LanguagesStep";
 import SkillsStep from "@/components/resume/SkillsStep";
 import ResumeExport from "@/components/resume/ResumeExport";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface Experience {
   id: string; company: string; role: string; period: string; description: string;
 }
 interface Education {
-  id: string; institution: string; course: string; period: string;
+  id: string; institution: string; course: string; period: string; description?: string;
 }
-interface Course {
-  id: string; name: string; institution: string;
+
+interface SkillItem {
+  id: string;
+  name: string;
+  type: string;
+}
+
+interface LanguageItem {
+  id: string;
+  language: string;
+  level: string;
 }
 
 export default function Resume({ user }: { user: UserData }) {
   const [personal, setPersonal] = useState({
-    name: user.name || "", email: user.email || "", phone: "", city: "", linkedin: "", portfolio: ""
+    name: user.name || "", email: user.email || "", phone: user.phone || "",
+    city: user.city || "", linkedin: user.linkedin_url || "", portfolio: user.portfolio_url || ""
   });
-  const [objective, setObjective] = useState("");
+  const [objective, setObjective] = useState(user.objective || "");
   const [experiences, setExperiences] = useState<Experience[]>([]);
   const [educations, setEducations] = useState<Education[]>([]);
-  const [courses, setCourses] = useState<Course[]>([]);
-  const [skills, setSkills] = useState<string[]>([]);
-  const [languages, setLanguages] = useState<{ lang: string; level: string }[]>([]);
+  const [skills, setSkills] = useState<SkillItem[]>([]);
+  const [languages, setLanguages] = useState<LanguageItem[]>([]);
   const [aiLoading, setAiLoading] = useState<string | null>(null);
+  const [dataLoading, setDataLoading] = useState(true);
+  const [savingPersonal, setSavingPersonal] = useState(false);
 
-  const addExperience = () => setExperiences(p => [...p, { id: crypto.randomUUID(), company: "", role: "", period: "", description: "" }]);
-  const addEducation = () => setEducations(p => [...p, { id: crypto.randomUUID(), institution: "", course: "", period: "" }]);
-  const addCourse = () => setCourses(p => [...p, { id: crypto.randomUUID(), name: "", institution: "" }]);
+  // Load all resume data from Supabase
+  useEffect(() => {
+    let cancelled = false;
+    const load = async () => {
+      setDataLoading(true);
+      try {
+        const { data: { user: authUser } } = await supabase.auth.getUser();
+        if (!authUser || cancelled) { setDataLoading(false); return; }
+        const uid = authUser.id;
 
-  const updateExp = (id: string, field: keyof Experience, value: string) =>
+        const [expRes, eduRes, skillRes, langRes] = await Promise.all([
+          supabase.from("experiences").select("*").eq("user_id", uid).order("sort_order", { ascending: true }),
+          supabase.from("education").select("*").eq("user_id", uid).order("sort_order", { ascending: true }),
+          supabase.from("skills").select("*").eq("user_id", uid),
+          supabase.from("languages").select("*").eq("user_id", uid),
+        ]);
+
+        if (cancelled) return;
+
+        if (expRes.data) setExperiences(expRes.data.map(e => ({
+          id: e.id, company: e.company, role: e.role, period: e.period || "", description: e.description || ""
+        })));
+        if (eduRes.data) setEducations(eduRes.data.map(e => ({
+          id: e.id, institution: e.institution, course: e.course, period: e.period || "", description: e.description || ""
+        })));
+        if (skillRes.data) setSkills(skillRes.data.map(s => ({ id: s.id, name: s.name, type: s.type })));
+        if (langRes.data) setLanguages(langRes.data.map(l => ({ id: l.id, language: l.language, level: l.level })));
+      } catch (err) {
+        console.error("Error loading resume data:", err);
+        toast({ title: "Erro ao carregar dados do currículo", variant: "destructive" });
+      } finally {
+        if (!cancelled) setDataLoading(false);
+      }
+    };
+    load();
+    return () => { cancelled = true; };
+  }, []);
+
+  // Save personal data + objective to profiles
+  const savePersonal = async () => {
+    setSavingPersonal(true);
+    try {
+      const { error } = await supabase.from("profiles").update({
+        name: personal.name,
+        phone: personal.phone,
+        city: personal.city,
+        linkedin_url: personal.linkedin,
+        portfolio_url: personal.portfolio,
+        objective,
+        updated_at: new Date().toISOString(),
+      }).eq("user_id", user.user_id);
+      if (error) throw error;
+      toast({ title: "✅ Dados pessoais salvos!" });
+    } catch (err: any) {
+      toast({ title: "Erro ao salvar", description: err.message, variant: "destructive" });
+    } finally {
+      setSavingPersonal(false);
+    }
+  };
+
+  // Experiences CRUD
+  const addExperience = async () => {
+    const { data: { user: authUser } } = await supabase.auth.getUser();
+    if (!authUser) return;
+    const { data, error } = await supabase.from("experiences").insert({
+      user_id: authUser.id,
+      company: "",
+      role: "",
+      period: "",
+      description: "",
+      sort_order: experiences.length,
+    }).select().single();
+    if (!error && data) {
+      setExperiences(p => [...p, { id: data.id, company: data.company, role: data.role, period: data.period || "", description: data.description || "" }]);
+      toast({ title: "✅ Experiência adicionada" });
+    }
+  };
+
+  const updateExp = useCallback(async (id: string, field: keyof Experience, value: string) => {
     setExperiences(p => p.map(e => e.id === id ? { ...e, [field]: value } : e));
+    // Debounced save handled by blur
+  }, []);
 
+  const saveExp = async (exp: Experience) => {
+    const { error } = await supabase.from("experiences").update({
+      company: exp.company, role: exp.role, period: exp.period, description: exp.description,
+      updated_at: new Date().toISOString(),
+    }).eq("id", exp.id);
+    if (error) toast({ title: "Erro ao salvar experiência", variant: "destructive" });
+    else toast({ title: "✅ Experiência salva!" });
+  };
+
+  const deleteExp = async (id: string) => {
+    const { error } = await supabase.from("experiences").delete().eq("id", id);
+    if (!error) {
+      setExperiences(p => p.filter(e => e.id !== id));
+      toast({ title: "Experiência removida" });
+    }
+  };
+
+  // Education CRUD
+  const addEducation = async () => {
+    const { data: { user: authUser } } = await supabase.auth.getUser();
+    if (!authUser) return;
+    const { data, error } = await supabase.from("education").insert({
+      user_id: authUser.id,
+      institution: "",
+      course: "",
+      period: "",
+      sort_order: educations.length,
+    }).select().single();
+    if (!error && data) {
+      setEducations(p => [...p, { id: data.id, institution: data.institution, course: data.course, period: data.period || "" }]);
+      toast({ title: "✅ Formação adicionada" });
+    }
+  };
+
+  const saveEdu = async (edu: Education) => {
+    const { error } = await supabase.from("education").update({
+      institution: edu.institution, course: edu.course, period: edu.period,
+      updated_at: new Date().toISOString(),
+    }).eq("id", edu.id);
+    if (error) toast({ title: "Erro ao salvar formação", variant: "destructive" });
+    else toast({ title: "✅ Formação salva!" });
+  };
+
+  const deleteEdu = async (id: string) => {
+    const { error } = await supabase.from("education").delete().eq("id", id);
+    if (!error) {
+      setEducations(p => p.filter(e => e.id !== id));
+      toast({ title: "Formação removida" });
+    }
+  };
+
+  // Skills CRUD
+  const addSkill = async (name: string, type: string = "hard") => {
+    const { data: { user: authUser } } = await supabase.auth.getUser();
+    if (!authUser) return;
+    const { data, error } = await supabase.from("skills").insert({
+      user_id: authUser.id, name, type,
+    }).select().single();
+    if (!error && data) {
+      setSkills(p => [...p, { id: data.id, name: data.name, type: data.type }]);
+    }
+  };
+
+  const removeSkill = async (id: string) => {
+    const { error } = await supabase.from("skills").delete().eq("id", id);
+    if (!error) setSkills(p => p.filter(s => s.id !== id));
+  };
+
+  // Languages CRUD
+  const addLanguage = async (language: string, level: string) => {
+    const { data: { user: authUser } } = await supabase.auth.getUser();
+    if (!authUser) return;
+    const { data, error } = await supabase.from("languages").insert({
+      user_id: authUser.id, language, level,
+    }).select().single();
+    if (!error && data) {
+      setLanguages(p => [...p, { id: data.id, language: data.language, level: data.level }]);
+    }
+  };
+
+  const removeLanguage = async (id: string) => {
+    const { error } = await supabase.from("languages").delete().eq("id", id);
+    if (!error) setLanguages(p => p.filter(l => l.id !== id));
+  };
+
+  const updateLanguageLevel = async (id: string, level: string) => {
+    setLanguages(p => p.map(l => l.id === id ? { ...l, level } : l));
+    await supabase.from("languages").update({ level }).eq("id", id);
+  };
+
+  // AI features
   const generateBullets = async (id: string) => {
     const exp = experiences.find(e => e.id === id);
     if (!exp?.description) return;
@@ -68,15 +248,30 @@ export default function Resume({ user }: { user: UserData }) {
     toast({ title: "Texto melhorado ✨" });
   };
 
+  // Data for export
+  const skillNames = skills.map(s => s.name);
   const resumeData = {
     ...personal,
     objective,
     experiences: experiences.map(({ id, ...rest }) => rest),
-    educations: educations.map(({ id, ...rest }) => rest),
-    courses: courses.map(({ id, ...rest }) => rest),
-    skills,
-    languages,
+    educations: educations.map(({ id, description, ...rest }) => rest),
+    courses: [] as { name: string; institution: string }[],
+    skills: skillNames,
+    languages: languages.map(l => ({ lang: l.language, level: l.level })),
   };
+
+  if (dataLoading) {
+    return (
+      <div className="p-4 md:p-8 max-w-6xl mx-auto space-y-6">
+        <h1 className="text-2xl font-bold text-foreground mb-6">📄 Meu Currículo</h1>
+        <div className="space-y-4">
+          <Skeleton className="h-10 w-full" />
+          <Skeleton className="h-64 w-full" />
+          <Skeleton className="h-32 w-full" />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="p-4 md:p-8 max-w-6xl mx-auto">
@@ -91,7 +286,6 @@ export default function Resume({ user }: { user: UserData }) {
               <TabsTrigger value="objective" className="text-xs">Objetivo</TabsTrigger>
               <TabsTrigger value="experience" className="text-xs">Experiências</TabsTrigger>
               <TabsTrigger value="education" className="text-xs">Formação</TabsTrigger>
-              <TabsTrigger value="courses" className="text-xs">Cursos</TabsTrigger>
               <TabsTrigger value="skills" className="text-xs">Habilidades</TabsTrigger>
               <TabsTrigger value="languages" className="text-xs">Idiomas</TabsTrigger>
             </TabsList>
@@ -101,21 +295,34 @@ export default function Resume({ user }: { user: UserData }) {
                 {Object.entries({ name: "Nome", email: "E-mail", phone: "Telefone", city: "Cidade/Estado", linkedin: "LinkedIn", portfolio: "Portfólio" }).map(([key, label]) => (
                   <div key={key} className="space-y-1">
                     <Label className="text-xs">{label}</Label>
-                    <Input value={(personal as any)[key]} onChange={e => setPersonal(p => ({ ...p, [key]: e.target.value }))} className="bg-muted/50" />
+                    <Input
+                      value={(personal as any)[key]}
+                      onChange={e => setPersonal(p => ({ ...p, [key]: e.target.value }))}
+                      className="bg-muted/50"
+                      disabled={key === "email"}
+                    />
                   </div>
                 ))}
               </div>
+              <Button onClick={savePersonal} disabled={savingPersonal} className="w-full">
+                {savingPersonal ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : null}
+                Salvar dados pessoais
+              </Button>
             </TabsContent>
 
             <TabsContent value="objective" className="glass-card p-5 space-y-4 mt-4">
               <Textarea value={objective} onChange={e => setObjective(e.target.value)} placeholder="Seu objetivo profissional..." className="bg-muted/50 min-h-[120px]" />
-              <div className="flex gap-2">
+              <div className="flex gap-2 flex-wrap">
                 <Button size="sm" onClick={generateObj} disabled={aiLoading === "objective"}>
                   {aiLoading === "objective" ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <Sparkles className="h-3 w-3 mr-1" />}
                   Gerar com IA
                 </Button>
                 <Button size="sm" variant="outline" onClick={improveObj} disabled={aiLoading === "objective" || !objective}>
                   Melhorar texto
+                </Button>
+                <Button size="sm" variant="outline" onClick={savePersonal} disabled={savingPersonal}>
+                  {savingPersonal ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : null}
+                  Salvar objetivo
                 </Button>
               </div>
             </TabsContent>
@@ -130,18 +337,18 @@ export default function Resume({ user }: { user: UserData }) {
                 <div key={exp.id} className="glass-card p-5 space-y-3">
                   <div className="flex justify-between">
                     <h3 className="text-sm font-semibold text-foreground">Experiência</h3>
-                    <Button size="icon" variant="ghost" onClick={() => setExperiences(p => p.filter(e => e.id !== exp.id))}>
+                    <Button size="icon" variant="ghost" onClick={() => deleteExp(exp.id)}>
                       <Trash2 className="h-4 w-4 text-destructive" />
                     </Button>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    <div className="space-y-1"><Label className="text-xs">Empresa</Label><Input value={exp.company} onChange={e => updateExp(exp.id, "company", e.target.value)} className="bg-muted/50" /></div>
-                    <div className="space-y-1"><Label className="text-xs">Cargo</Label><Input value={exp.role} onChange={e => updateExp(exp.id, "role", e.target.value)} className="bg-muted/50" /></div>
-                    <div className="space-y-1 md:col-span-2"><Label className="text-xs">Período</Label><Input value={exp.period} onChange={e => updateExp(exp.id, "period", e.target.value)} placeholder="Jan 2020 - Dez 2023" className="bg-muted/50" /></div>
+                    <div className="space-y-1"><Label className="text-xs">Empresa</Label><Input value={exp.company} onChange={e => updateExp(exp.id, "company", e.target.value)} onBlur={() => saveExp(exp)} className="bg-muted/50" /></div>
+                    <div className="space-y-1"><Label className="text-xs">Cargo</Label><Input value={exp.role} onChange={e => updateExp(exp.id, "role", e.target.value)} onBlur={() => saveExp(exp)} className="bg-muted/50" /></div>
+                    <div className="space-y-1 md:col-span-2"><Label className="text-xs">Período</Label><Input value={exp.period} onChange={e => updateExp(exp.id, "period", e.target.value)} onBlur={() => saveExp(exp)} placeholder="Jan 2020 - Dez 2023" className="bg-muted/50" /></div>
                   </div>
                   <div className="space-y-1">
                     <Label className="text-xs">Descrição</Label>
-                    <Textarea value={exp.description} onChange={e => updateExp(exp.id, "description", e.target.value)} className="bg-muted/50 min-h-[100px]" placeholder="Descreva suas atividades..." />
+                    <Textarea value={exp.description} onChange={e => updateExp(exp.id, "description", e.target.value)} onBlur={() => saveExp(exp)} className="bg-muted/50 min-h-[100px]" placeholder="Descreva suas atividades..." />
                   </div>
                   <Button size="sm" onClick={() => generateBullets(exp.id)} disabled={aiLoading === exp.id}>
                     {aiLoading === exp.id ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <Sparkles className="h-3 w-3 mr-1" />}
@@ -164,14 +371,14 @@ export default function Resume({ user }: { user: UserData }) {
                 <div key={edu.id} className="glass-card p-5 space-y-3">
                   <div className="flex justify-between">
                     <h3 className="text-sm font-semibold text-foreground">Formação</h3>
-                    <Button size="icon" variant="ghost" onClick={() => setEducations(p => p.filter(e => e.id !== edu.id))}>
+                    <Button size="icon" variant="ghost" onClick={() => deleteEdu(edu.id)}>
                       <Trash2 className="h-4 w-4 text-destructive" />
                     </Button>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    <div className="space-y-1"><Label className="text-xs">Instituição</Label><Input value={edu.institution} onChange={e => setEducations(p => p.map(ed => ed.id === edu.id ? { ...ed, institution: e.target.value } : ed))} className="bg-muted/50" /></div>
-                    <div className="space-y-1"><Label className="text-xs">Curso</Label><Input value={edu.course} onChange={e => setEducations(p => p.map(ed => ed.id === edu.id ? { ...ed, course: e.target.value } : ed))} className="bg-muted/50" /></div>
-                    <div className="space-y-1 md:col-span-2"><Label className="text-xs">Período</Label><Input value={edu.period} onChange={e => setEducations(p => p.map(ed => ed.id === edu.id ? { ...ed, period: e.target.value } : ed))} className="bg-muted/50" /></div>
+                    <div className="space-y-1"><Label className="text-xs">Instituição</Label><Input value={edu.institution} onChange={e => setEducations(p => p.map(ed => ed.id === edu.id ? { ...ed, institution: e.target.value } : ed))} onBlur={() => saveEdu(edu)} className="bg-muted/50" /></div>
+                    <div className="space-y-1"><Label className="text-xs">Curso</Label><Input value={edu.course} onChange={e => setEducations(p => p.map(ed => ed.id === edu.id ? { ...ed, course: e.target.value } : ed))} onBlur={() => saveEdu(edu)} className="bg-muted/50" /></div>
+                    <div className="space-y-1 md:col-span-2"><Label className="text-xs">Período</Label><Input value={edu.period} onChange={e => setEducations(p => p.map(ed => ed.id === edu.id ? { ...ed, period: e.target.value } : ed))} onBlur={() => saveEdu(edu)} className="bg-muted/50" /></div>
                   </div>
                 </div>
               ))}
@@ -180,29 +387,23 @@ export default function Resume({ user }: { user: UserData }) {
               </Button>
             </TabsContent>
 
-            <TabsContent value="courses" className="space-y-4 mt-4">
-              {courses.map(c => (
-                <div key={c.id} className="glass-card p-4 flex gap-3 items-center">
-                  <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-3">
-                    <Input value={c.name} onChange={e => setCourses(p => p.map(cc => cc.id === c.id ? { ...cc, name: e.target.value } : cc))} placeholder="Nome do curso" className="bg-muted/50" />
-                    <Input value={c.institution} onChange={e => setCourses(p => p.map(cc => cc.id === c.id ? { ...cc, institution: e.target.value } : cc))} placeholder="Instituição" className="bg-muted/50" />
-                  </div>
-                  <Button size="icon" variant="ghost" onClick={() => setCourses(p => p.filter(cc => cc.id !== c.id))}>
-                    <Trash2 className="h-4 w-4 text-destructive" />
-                  </Button>
-                </div>
-              ))}
-              <Button variant="outline" onClick={addCourse} className="w-full">
-                <Plus className="h-4 w-4 mr-1" /> Adicionar curso
-              </Button>
-            </TabsContent>
-
             <TabsContent value="skills" className="glass-card p-5 mt-4">
-              <SkillsStep skills={skills} setSkills={setSkills} userArea={user.area} userRole={user.target_role} />
+              <SkillsStep
+                skills={skills}
+                onAddSkill={addSkill}
+                onRemoveSkill={removeSkill}
+                userArea={user.area}
+                userRole={user.target_role}
+              />
             </TabsContent>
 
             <TabsContent value="languages" className="glass-card p-5 mt-4">
-              <LanguagesStep languages={languages} setLanguages={setLanguages} />
+              <LanguagesStep
+                languages={languages}
+                onAddLanguage={addLanguage}
+                onRemoveLanguage={removeLanguage}
+                onUpdateLevel={updateLanguageLevel}
+              />
             </TabsContent>
           </Tabs>
         </div>
@@ -243,17 +444,17 @@ export default function Resume({ user }: { user: UserData }) {
                   ))}
                 </div>
               )}
-              {skills.length > 0 && (
+              {skillNames.length > 0 && (
                 <div>
                   <h3 className="font-semibold text-xs uppercase tracking-wider mb-1">Habilidades</h3>
-                  <p className="text-xs text-gray-600">{skills.join(" • ")}</p>
+                  <p className="text-xs text-gray-600">{skillNames.join(" • ")}</p>
                 </div>
               )}
               {languages.length > 0 && (
                 <div>
                   <h3 className="font-semibold text-xs uppercase tracking-wider mb-1">Idiomas</h3>
-                  {languages.map((l, i) => (
-                    <p key={i} className="text-xs text-gray-600">{l.lang} — {l.level}</p>
+                  {languages.map((l) => (
+                    <p key={l.id} className="text-xs text-gray-600">{l.language} — {l.level}</p>
                   ))}
                 </div>
               )}

@@ -7,9 +7,16 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "@/hooks/use-toast";
 import * as gemini from "@/services/gemini";
 
+interface SkillItem {
+  id: string;
+  name: string;
+  type: string;
+}
+
 interface SkillsStepProps {
-  skills: string[];
-  setSkills: React.Dispatch<React.SetStateAction<string[]>>;
+  skills: SkillItem[];
+  onAddSkill: (name: string, type?: string) => Promise<void>;
+  onRemoveSkill: (id: string) => Promise<void>;
   userArea?: string | null;
   userRole?: string | null;
 }
@@ -20,17 +27,20 @@ interface GeneratedSkills {
   tools: string[];
 }
 
-export default function SkillsStep({ skills, setSkills, userArea, userRole }: SkillsStepProps) {
+export default function SkillsStep({ skills, onAddSkill, onRemoveSkill, userArea, userRole }: SkillsStepProps) {
   const [skillInput, setSkillInput] = useState("");
   const [generating, setGenerating] = useState(false);
   const [generated, setGenerated] = useState<GeneratedSkills | null>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
 
-  const addSkill = () => {
+  const skillNames = skills.map(s => s.name);
+
+  const addSkill = async () => {
     const trimmed = skillInput.trim();
-    if (trimmed && !skills.includes(trimmed)) {
-      setSkills((p) => [...p, trimmed]);
+    if (trimmed && !skillNames.includes(trimmed)) {
+      await onAddSkill(trimmed, "hard");
       setSkillInput("");
+      toast({ title: "✅ Habilidade adicionada" });
     }
   };
 
@@ -38,7 +48,7 @@ export default function SkillsStep({ skills, setSkills, userArea, userRole }: Sk
     setGenerating(true);
     try {
       const alreadySelected = keepSelected ? Array.from(selected) : [];
-      const allExisting = [...skills, ...alreadySelected];
+      const allExisting = [...skillNames, ...alreadySelected];
       const role = userRole || "Profissional";
       const area = userArea || "TI";
 
@@ -74,9 +84,11 @@ All skills in Brazilian Portuguese.`;
     });
   };
 
-  const addSelected = () => {
-    const newSkills = Array.from(selected).filter((s) => !skills.includes(s));
-    setSkills((p) => [...p, ...newSkills]);
+  const addSelected = async () => {
+    const newSkills = Array.from(selected).filter((s) => !skillNames.includes(s));
+    for (const s of newSkills) {
+      await onAddSkill(s, "hard");
+    }
     setSelected(new Set());
     setGenerated(null);
     toast({ title: `${newSkills.length} habilidades adicionadas ✨` });
@@ -90,7 +102,7 @@ All skills in Brazilian Portuguese.`;
       <div className="flex flex-wrap gap-1.5">
         {items.map((skill) => {
           const isSelected = selected.has(skill);
-          const alreadyAdded = skills.includes(skill);
+          const alreadyAdded = skillNames.includes(skill);
           return (
             <motion.button
               key={skill}
@@ -116,7 +128,6 @@ All skills in Brazilian Portuguese.`;
 
   return (
     <div className="space-y-5">
-      {/* AI Generate button */}
       {!generated && !generating && (
         <Button
           onClick={() => generateSkills(false)}
@@ -127,39 +138,24 @@ All skills in Brazilian Portuguese.`;
         </Button>
       )}
 
-      {/* Loading skeleton */}
       <AnimatePresence>
         {generating && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="space-y-4"
-          >
+          <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="space-y-4">
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <Loader2 className="h-4 w-4 animate-spin" />
               Analisando seu perfil e área de atuação...
             </div>
             <div className="flex flex-wrap gap-1.5">
               {Array.from({ length: 24 }).map((_, i) => (
-                <Skeleton
-                  key={i}
-                  className="h-8 rounded-full"
-                  style={{ width: `${60 + Math.random() * 60}px`, animationDelay: `${i * 50}ms` }}
-                />
+                <Skeleton key={i} className="h-8 rounded-full" style={{ width: `${60 + Math.random() * 60}px`, animationDelay: `${i * 50}ms` }} />
               ))}
             </div>
           </motion.div>
         )}
       </AnimatePresence>
 
-      {/* Generated skills */}
       {generated && !generating && (
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="space-y-4"
-        >
+        <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-4">
           <div className="flex items-center justify-between">
             <p className="text-sm text-muted-foreground">
               <span className="font-semibold text-foreground">{selected.size}</span> habilidades selecionadas
@@ -181,7 +177,6 @@ All skills in Brazilian Portuguese.`;
         </motion.div>
       )}
 
-      {/* Manual add */}
       <div className="flex gap-2">
         <Input
           value={skillInput}
@@ -193,7 +188,6 @@ All skills in Brazilian Portuguese.`;
         <Button size="sm" onClick={addSkill}>Adicionar</Button>
       </div>
 
-      {/* Current skills */}
       {skills.length > 0 && (
         <div>
           <h3 className="text-sm font-semibold text-foreground mb-2">
@@ -202,15 +196,15 @@ All skills in Brazilian Portuguese.`;
           <div className="flex flex-wrap gap-1.5">
             {skills.map((s) => (
               <motion.span
-                key={s}
+                key={s.id}
                 layout
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}
                 className="px-3 py-1.5 rounded-full text-xs font-medium border border-secondary/30 bg-secondary/10 text-foreground flex items-center gap-1"
               >
-                {s}
+                {s.name}
                 <button
-                  onClick={() => setSkills((p) => p.filter((sk) => sk !== s))}
+                  onClick={() => onRemoveSkill(s.id)}
                   className="text-muted-foreground hover:text-destructive ml-0.5"
                 >
                   <X className="h-3 w-3" />
