@@ -19,7 +19,7 @@ const GoogleIcon = () => (
 );
 
 export default function Login() {
-  const { login, loginWithGoogle } = useAuth();
+  const { login } = useAuth();
   const navigate = useNavigate();
 
   const [email, setEmail] = useState("");
