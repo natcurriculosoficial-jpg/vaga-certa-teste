@@ -21,6 +21,7 @@ const statusLabels: Record<string, string> = {
 };
 
 export default function JobRadar() {
+  const { user: profile } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
   const [jobs, setJobs] = useState<KanbanJob[]>([]);
   const [loading, setLoading] = useState(true);
