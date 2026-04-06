@@ -233,7 +233,10 @@ export default function JobRadar() {
   const analyzeMatch = async () => {
     if (!jobDesc) return;
     setMatchLoading(true);
-    const result = await geminiService.analyzeJobMatch("Currículo do usuário (dados do perfil)", jobDesc);
+    const userContext = profile
+      ? `Profissional: ${profile.name}. Cargo: ${profile.target_role || "não informado"}. Área: ${profile.area || "não informada"}. Nível: ${profile.level || "não informado"}. Objetivo: ${profile.objective || "não informado"}.`
+      : "Perfil do usuário não disponível";
+    const result = await geminiService.analyzeJobMatch(userContext, jobDesc);
     setMatchResult(result);
     setMatchLoading(false);
   };

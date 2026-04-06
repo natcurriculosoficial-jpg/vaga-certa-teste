@@ -27,7 +27,6 @@ const NAV_MAIN = [
 ];
 
 const NAV_BOTTOM = [
-  { label: "Meu Perfil", icon: User, path: "/profile" },
   { label: "Configurações", icon: Settings, path: "/settings" },
 ];
 
