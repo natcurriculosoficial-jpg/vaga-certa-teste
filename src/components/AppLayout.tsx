@@ -121,7 +121,7 @@ export default function AppLayout({
     return (
       <div className="flex flex-col h-full bg-sidebar text-sidebar-foreground">
         {/* Logo */}
-        <div className={`flex items-center border-b border-white/[0.06] ${isCollapsed ? "justify-center py-4 px-2" : "px-5 py-4"}`}>
+        <div className={`flex items-center border-b border-sidebar-border ${isCollapsed ? "justify-center py-4 px-2" : "px-5 py-4"}`}>
           {isCollapsed ? (
             <div className="w-9 h-9 rounded-[10px] gradient-primary flex items-center justify-center">
               <span className="text-xs font-bold text-white">VC</span>
