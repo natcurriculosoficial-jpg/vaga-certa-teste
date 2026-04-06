@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import * as geminiService from "@/services/gemini";
+import { useAuth } from "@/hooks/useAuth";
 import JobFilterPanel, { type JobFilters, EMPTY_FILTERS, classifyJob, TierBadge, getActiveFilterCount } from "@/components/jobs/JobFilters";
 import JobKanban, { type KanbanJob } from "@/components/jobs/JobKanban";
 import JobAlertsPanel, { useJobAlerts, AlertBadge } from "@/components/jobs/JobAlerts";
