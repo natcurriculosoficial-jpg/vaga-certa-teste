@@ -51,7 +51,15 @@ export default function Login() {
   const handleGoogle = async () => {
     setGoogleLoad(true);
     try {
-      await loginWithGoogle();
+      const result = await lovable.auth.signInWithOAuth("google", {
+        redirect_uri: window.location.origin,
+      });
+      if (result.error) {
+        toast({ title: "Erro ao entrar com Google", description: String(result.error), variant: "destructive" });
+        setGoogleLoad(false);
+        return;
+      }
+      if (result.redirected) return;
     } catch (err: any) {
       toast({ title: "Erro ao entrar com Google", description: err.message, variant: "destructive" });
       setGoogleLoad(false);
