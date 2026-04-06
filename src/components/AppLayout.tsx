@@ -149,7 +149,7 @@ export default function AppLayout({
             onClick={() => navigate("/pricing")}
             variant="warning"
           />
-          <div className="pt-1 mt-1 border-t border-white/[0.06]">
+          <div className="pt-1 mt-1 border-t border-sidebar-border">
             <SidebarItem icon={LogOut} label="Sair" onClick={onLogout} variant="danger" />
           </div>
         </div>
