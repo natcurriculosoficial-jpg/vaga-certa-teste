@@ -158,7 +158,7 @@ export default function AppLayout({
         {!isMobile && (
           <button
             onClick={() => setCollapsed(c => !c)}
-            className="flex items-center justify-center py-3 border-t border-white/[0.06] text-white/30 hover:text-white/70 transition-colors duration-200"
+            className="flex items-center justify-center py-3 border-t border-sidebar-border text-muted-foreground hover:text-sidebar-foreground transition-colors duration-200"
           >
             {collapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
           </button>
