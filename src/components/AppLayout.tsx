@@ -139,7 +139,7 @@ export default function AppLayout({
         </nav>
 
         {/* Bottom */}
-        <div className="px-2 py-3 border-t border-white/[0.06] space-y-1">
+        <div className="px-2 py-3 border-t border-sidebar-border space-y-1">
           {NAV_BOTTOM.map(navItem => (
             <SidebarItem key={navItem.path} icon={navItem.icon} label={navItem.label} path={navItem.path} />
           ))}
