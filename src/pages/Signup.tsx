@@ -29,7 +29,7 @@ const PW_RULES = [
 ];
 
 export default function Signup() {
-  const { signup, loginWithGoogle } = useAuth();
+  const { signup } = useAuth();
   const navigate = useNavigate();
 
   const [step, setStep] = useState<1 | 2>(1);
