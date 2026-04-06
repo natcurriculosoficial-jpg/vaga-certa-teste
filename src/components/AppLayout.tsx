@@ -119,7 +119,7 @@ export default function AppLayout({
     const isCollapsed = isMobile ? false : collapsed;
 
     return (
-      <div className="flex flex-col h-full bg-[hsl(220,25%,7%)] text-white">
+      <div className="flex flex-col h-full bg-sidebar text-sidebar-foreground">
         {/* Logo */}
         <div className={`flex items-center border-b border-white/[0.06] ${isCollapsed ? "justify-center py-4 px-2" : "px-5 py-4"}`}>
           {isCollapsed ? (
