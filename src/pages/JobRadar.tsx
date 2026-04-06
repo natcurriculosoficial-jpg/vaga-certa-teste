@@ -9,6 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import * as geminiService from "@/services/gemini";
+import { useAuth } from "@/hooks/useAuth";
 import JobFilterPanel, { type JobFilters, EMPTY_FILTERS, classifyJob, TierBadge, getActiveFilterCount } from "@/components/jobs/JobFilters";
 import JobKanban, { type KanbanJob } from "@/components/jobs/JobKanban";
 import JobAlertsPanel, { useJobAlerts, AlertBadge } from "@/components/jobs/JobAlerts";
@@ -20,6 +21,7 @@ const statusLabels: Record<string, string> = {
 };
 
 export default function JobRadar() {
+  const { user: profile } = useAuth();
   const [searchParams, setSearchParams] = useSearchParams();
   const [jobs, setJobs] = useState<KanbanJob[]>([]);
   const [loading, setLoading] = useState(true);
@@ -231,7 +233,10 @@ export default function JobRadar() {
   const analyzeMatch = async () => {
     if (!jobDesc) return;
     setMatchLoading(true);
-    const result = await geminiService.analyzeJobMatch("Currículo do usuário (dados do perfil)", jobDesc);
+    const userContext = profile
+      ? `Profissional: ${profile.name}. Cargo: ${profile.target_role || "não informado"}. Área: ${profile.area || "não informada"}. Nível: ${profile.level || "não informado"}. Objetivo: ${profile.objective || "não informado"}.`
+      : "Perfil do usuário não disponível";
+    const result = await geminiService.analyzeJobMatch(userContext, jobDesc);
     setMatchResult(result);
     setMatchLoading(false);
   };
