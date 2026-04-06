@@ -66,12 +66,12 @@ export default function AppLayout({
     };
 
     const colorClasses = variant === "warning"
-      ? "text-amber-400 hover:text-amber-300 hover:bg-amber-400/15"
+      ? "text-amber-500 hover:text-amber-600 hover:bg-amber-500/10"
       : variant === "danger"
-      ? "text-red-400 hover:text-red-300 hover:bg-red-400/15"
+      ? "text-red-500 hover:text-red-600 hover:bg-red-500/10"
       : active
-      ? "bg-white/10 text-white"
-      : "text-white/40 hover:text-white hover:bg-primary/25";
+      ? "bg-primary/10 text-primary font-medium"
+      : "text-sidebar-muted hover:text-sidebar-foreground hover:bg-sidebar-accent";
 
     const button = (
       <button
@@ -119,9 +119,9 @@ export default function AppLayout({
     const isCollapsed = isMobile ? false : collapsed;
 
     return (
-      <div className="flex flex-col h-full bg-[hsl(220,25%,7%)] text-white">
+      <div className="flex flex-col h-full bg-sidebar text-sidebar-foreground">
         {/* Logo */}
-        <div className={`flex items-center border-b border-white/[0.06] ${isCollapsed ? "justify-center py-4 px-2" : "px-5 py-4"}`}>
+        <div className={`flex items-center border-b border-sidebar-border ${isCollapsed ? "justify-center py-4 px-2" : "px-5 py-4"}`}>
           {isCollapsed ? (
             <div className="w-9 h-9 rounded-[10px] gradient-primary flex items-center justify-center">
               <span className="text-xs font-bold text-white">VC</span>
@@ -139,7 +139,7 @@ export default function AppLayout({
         </nav>
 
         {/* Bottom */}
-        <div className="px-2 py-3 border-t border-white/[0.06] space-y-1">
+        <div className="px-2 py-3 border-t border-sidebar-border space-y-1">
           {NAV_BOTTOM.map(navItem => (
             <SidebarItem key={navItem.path} icon={navItem.icon} label={navItem.label} path={navItem.path} />
           ))}
@@ -149,7 +149,7 @@ export default function AppLayout({
             onClick={() => navigate("/pricing")}
             variant="warning"
           />
-          <div className="pt-1 mt-1 border-t border-white/[0.06]">
+          <div className="pt-1 mt-1 border-t border-sidebar-border">
             <SidebarItem icon={LogOut} label="Sair" onClick={onLogout} variant="danger" />
           </div>
         </div>
@@ -158,7 +158,7 @@ export default function AppLayout({
         {!isMobile && (
           <button
             onClick={() => setCollapsed(c => !c)}
-            className="flex items-center justify-center py-3 border-t border-white/[0.06] text-white/30 hover:text-white/70 transition-colors duration-200"
+            className="flex items-center justify-center py-3 border-t border-sidebar-border text-muted-foreground hover:text-sidebar-foreground transition-colors duration-200"
           >
             {collapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
           </button>
