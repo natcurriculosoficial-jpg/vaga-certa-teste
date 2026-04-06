@@ -66,12 +66,12 @@ export default function AppLayout({
     };
 
     const colorClasses = variant === "warning"
-      ? "text-amber-400 hover:text-amber-300 hover:bg-amber-400/15"
+      ? "text-amber-500 hover:text-amber-600 hover:bg-amber-500/10"
       : variant === "danger"
-      ? "text-red-400 hover:text-red-300 hover:bg-red-400/15"
+      ? "text-red-500 hover:text-red-600 hover:bg-red-500/10"
       : active
-      ? "bg-white/10 text-white"
-      : "text-white/40 hover:text-white hover:bg-primary/25";
+      ? "bg-primary/10 text-primary font-medium"
+      : "text-sidebar-muted hover:text-sidebar-foreground hover:bg-sidebar-accent";
 
     const button = (
       <button
