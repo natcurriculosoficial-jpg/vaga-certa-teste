@@ -63,7 +63,8 @@ function AppRoutes() {
         <Route path="/job-radar" element={<JobRadar />} />
         <Route path="/interview" element={<Interview user={user} />} />
         <Route path="/profile" element={<Profile user={user} onUpdate={updateProfile} />} />
-        <Route path="/settings" element={<SettingsPage onLogout={logout} />} />
+        <Route path="/settings" element={<SettingsPage />} />
+        <Route path="/profile" element={<Navigate to="/settings" replace />} />
         <Route path="/pricing" element={<Pricing />} />
         <Route path="/" element={<Navigate to="/dashboard" replace />} />
         <Route path="*" element={<NotFound />} />
