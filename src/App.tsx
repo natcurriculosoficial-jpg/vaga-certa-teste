@@ -38,8 +38,8 @@ function AppRoutes() {
   if (!user) {
     return (
       <Routes>
-        <Route path="/login" element={<Login onLogin={login} onGoogleLogin={loginWithGoogle} />} />
-        <Route path="/signup" element={<Signup onSignup={signup} />} />
+        <Route path="/login" element={<Login />} />
+        <Route path="/signup" element={<Signup />} />
         <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
     );
