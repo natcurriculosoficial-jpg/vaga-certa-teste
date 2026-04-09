@@ -42,6 +42,7 @@ export default function AppLayout({
   const navigate = useNavigate();
   const location = useLocation();
   const { resolved, setTheme } = useTheme();
+  const { isAdmin } = useAdmin();
   const [collapsed, setCollapsed] = useState(true);
   const [mobileOpen, setMobileOpen] = useState(false);
 
