@@ -4,8 +4,9 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   LayoutDashboard, FileText, Linkedin, Radar, Mic,
   User, Settings, LogOut, Crown, ChevronRight, ChevronLeft,
-  Search, Sun, Moon, Menu, X,
+  Search, Sun, Moon, Menu, X, BookOpen, Shield,
 } from "lucide-react";
+import { useAdmin } from "@/hooks/useAdmin";
 import Logo from "./Logo";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
@@ -24,6 +25,7 @@ const NAV_MAIN = [
   { label: "Meu Currículo", icon: FileText, path: "/resume" },
   { label: "LinkedIn Campeão", icon: Linkedin, path: "/linkedin" },
   { label: "Simular Entrevista", icon: Mic, path: "/interview" },
+  { label: "Área de Membros", icon: BookOpen, path: "/members" },
 ];
 
 const NAV_BOTTOM = [

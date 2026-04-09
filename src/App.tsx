@@ -17,6 +17,9 @@ import Interview from "@/pages/Interview";
 import Profile from "@/pages/Profile";
 import SettingsPage from "@/pages/Settings";
 import Pricing from "@/pages/Pricing";
+import Members from "@/pages/Members";
+import CourseViewer from "@/pages/CourseViewer";
+import Admin from "@/pages/Admin";
 import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -66,6 +69,9 @@ function AppRoutes() {
         <Route path="/settings" element={<SettingsPage />} />
         <Route path="/profile" element={<Navigate to="/settings" replace />} />
         <Route path="/pricing" element={<Pricing />} />
+        <Route path="/members" element={<Members />} />
+        <Route path="/members/course/:id" element={<CourseViewer />} />
+        <Route path="/admin" element={<Admin />} />
         <Route path="/" element={<Navigate to="/dashboard" replace />} />
         <Route path="*" element={<NotFound />} />
       </Routes>
