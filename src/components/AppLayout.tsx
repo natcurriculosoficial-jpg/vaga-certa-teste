@@ -145,6 +145,9 @@ export default function AppLayout({
           {NAV_BOTTOM.map(navItem => (
             <SidebarItem key={navItem.path} icon={navItem.icon} label={navItem.label} path={navItem.path} />
           ))}
+          {isAdmin && (
+            <SidebarItem icon={Shield} label="Admin" path="/admin" />
+          )}
           <SidebarItem
             icon={Crown}
             label="Upgrade PRO"
