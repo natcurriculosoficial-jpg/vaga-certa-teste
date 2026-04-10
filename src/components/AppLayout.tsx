@@ -47,6 +47,7 @@ export default function AppLayout({
   const location = useLocation();
   const { resolved, setTheme } = useTheme();
   const { isAdmin } = useAdmin();
+  const { user: profile } = useAuth();
   const [collapsed, setCollapsed] = useState(true);
   const [mobileOpen, setMobileOpen] = useState(false);
 
