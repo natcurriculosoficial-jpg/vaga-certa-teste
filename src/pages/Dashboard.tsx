@@ -2,10 +2,11 @@ import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
   FileText, Linkedin, Radar, Mic, ArrowRight,
-  TrendingUp, Sparkles, Target,
+  TrendingUp, Sparkles, Target, CheckSquare,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { Profile } from "@/hooks/useAuth";
+import { useChecklist } from "@/hooks/useChecklist";
 import FabMenu from "@/components/FabMenu";
 
 const container = {
@@ -19,6 +20,7 @@ const item = {
 
 export default function Dashboard({ user }: { user: Profile }) {
   const navigate = useNavigate();
+  const { completedCount, total, percentage } = useChecklist();
 
   const metrics = [
     { label: "Currículo", value: "25%", sub: "completo", icon: FileText },
@@ -90,6 +92,26 @@ export default function Dashboard({ user }: { user: Profile }) {
             <p className="text-xs text-muted-foreground">{m.sub}</p>
           </div>
         ))}
+      </motion.div>
+
+      {/* Checklist progress */}
+      <motion.div variants={item}>
+        <button
+          onClick={() => navigate("/checklist")}
+          className="vc-card w-full text-left hover-lift flex items-center gap-4"
+        >
+          <div className="p-2.5 rounded-xl gradient-primary">
+            <CheckSquare className="h-5 w-5 text-primary-foreground" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-foreground">Minha Jornada</p>
+            <p className="text-xs text-muted-foreground">{completedCount}/{total} etapas concluídas — {percentage}% 🎯</p>
+            <div className="h-2 bg-muted rounded-full mt-2 overflow-hidden">
+              <div className="h-full gradient-primary rounded-full transition-all duration-500" style={{ width: `${percentage}%` }} />
+            </div>
+          </div>
+          <ArrowRight className="h-4 w-4 text-muted-foreground shrink-0" />
+        </button>
       </motion.div>
 
       {/* Next steps */}
