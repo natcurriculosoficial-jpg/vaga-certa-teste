@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import {
   User, Briefcase, Bell, Lock, Mail, Phone,
   Eye, EyeOff, Save, Sparkles, Loader2, Upload,
-  Shield, Check, X
+  Shield, Check, X, Camera, Instagram
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -47,6 +47,9 @@ export default function Settings() {
   const [city, setCity] = useState(profile?.city || "");
   const [linkedin, setLinkedin] = useState(profile?.linkedin_url || "");
   const [portfolio, setPortfolio] = useState(profile?.portfolio_url || "");
+  const [instagram, setInstagram] = useState(profile?.instagram_url || "");
+  const [avatarUrl, setAvatarUrl] = useState(profile?.avatar_url || "");
+  const [avatarUploading, setAvatarUploading] = useState(false);
 
   const [pwNew, setPwNew] = useState("");
   const [pwConfirm, setPwConfirm] = useState("");
@@ -78,6 +81,8 @@ export default function Settings() {
     setCity(profile.city || "");
     setLinkedin(profile.linkedin_url || "");
     setPortfolio(profile.portfolio_url || "");
+    setInstagram(profile.instagram_url || "");
+    setAvatarUrl(profile.avatar_url || "");
     setTargetRole(profile.target_role || "");
     setLevel(profile.level || "");
     setArea(profile.area || "");
@@ -99,7 +104,7 @@ export default function Settings() {
   const savePersonal = async () => {
     setSaving(true);
     try {
-      await updateProfile({ name, phone, city, linkedin_url: linkedin, portfolio_url: portfolio });
+      await updateProfile({ name, phone, city, linkedin_url: linkedin, portfolio_url: portfolio, instagram_url: instagram });
 
       if (pwNew) {
         if (pwNew !== pwConfirm) {
