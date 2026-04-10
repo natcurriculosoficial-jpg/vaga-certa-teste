@@ -170,6 +170,39 @@ export default function Settings() {
     }
   };
 
+  const uploadAvatar = async (file: File) => {
+    if (!session?.user) return;
+    if (file.size > 5 * 1024 * 1024) {
+      toast({ title: "Imagem muito grande (máx 5MB)", variant: "destructive" });
+      return;
+    }
+    setAvatarUploading(true);
+    try {
+      const ext = file.name.split(".").pop();
+      const path = `${session.user.id}/avatar.${ext}`;
+      const { error: upErr } = await supabase.storage.from("avatars").upload(path, file, { upsert: true });
+      if (upErr) throw upErr;
+      const { data: pub } = supabase.storage.from("avatars").getPublicUrl(path);
+      const url = pub.publicUrl + `?t=${Date.now()}`;
+      await updateProfile({ avatar_url: url });
+      setAvatarUrl(url);
+
+      // auto-complete checklist
+      await supabase.from("checklist_progress").upsert({
+        user_id: session.user.id,
+        item_key: "fill_personal_profile",
+        completed: true,
+        completed_at: new Date().toISOString(),
+      });
+
+      toast({ title: "✅ Foto atualizada!" });
+    } catch (e: any) {
+      toast({ title: "Erro no upload", description: e.message, variant: "destructive" });
+    } finally {
+      setAvatarUploading(false);
+    }
+  };
+
   const uploadResume = async (file: File) => {
     if (!session?.user) return;
     toast({ title: "Upload de currículo disponível em breve", description: "Funcionalidade em desenvolvimento." });
