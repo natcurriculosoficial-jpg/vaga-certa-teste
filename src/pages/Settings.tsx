@@ -3,7 +3,7 @@ import { motion } from "framer-motion";
 import {
   User, Briefcase, Bell, Lock, Mail, Phone,
   Eye, EyeOff, Save, Sparkles, Loader2, Upload,
-  Shield, Check, X
+  Shield, Check, X, Camera, Instagram
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
@@ -47,6 +47,9 @@ export default function Settings() {
   const [city, setCity] = useState(profile?.city || "");
   const [linkedin, setLinkedin] = useState(profile?.linkedin_url || "");
   const [portfolio, setPortfolio] = useState(profile?.portfolio_url || "");
+  const [instagram, setInstagram] = useState(profile?.instagram_url || "");
+  const [avatarUrl, setAvatarUrl] = useState(profile?.avatar_url || "");
+  const [avatarUploading, setAvatarUploading] = useState(false);
 
   const [pwNew, setPwNew] = useState("");
   const [pwConfirm, setPwConfirm] = useState("");
@@ -78,6 +81,8 @@ export default function Settings() {
     setCity(profile.city || "");
     setLinkedin(profile.linkedin_url || "");
     setPortfolio(profile.portfolio_url || "");
+    setInstagram(profile.instagram_url || "");
+    setAvatarUrl(profile.avatar_url || "");
     setTargetRole(profile.target_role || "");
     setLevel(profile.level || "");
     setArea(profile.area || "");
@@ -99,7 +104,7 @@ export default function Settings() {
   const savePersonal = async () => {
     setSaving(true);
     try {
-      await updateProfile({ name, phone, city, linkedin_url: linkedin, portfolio_url: portfolio });
+      await updateProfile({ name, phone, city, linkedin_url: linkedin, portfolio_url: portfolio, instagram_url: instagram });
 
       if (pwNew) {
         if (pwNew !== pwConfirm) {
@@ -165,6 +170,39 @@ export default function Settings() {
     }
   };
 
+  const uploadAvatar = async (file: File) => {
+    if (!session?.user) return;
+    if (file.size > 5 * 1024 * 1024) {
+      toast({ title: "Imagem muito grande (máx 5MB)", variant: "destructive" });
+      return;
+    }
+    setAvatarUploading(true);
+    try {
+      const ext = file.name.split(".").pop();
+      const path = `${session.user.id}/avatar.${ext}`;
+      const { error: upErr } = await supabase.storage.from("avatars").upload(path, file, { upsert: true });
+      if (upErr) throw upErr;
+      const { data: pub } = supabase.storage.from("avatars").getPublicUrl(path);
+      const url = pub.publicUrl + `?t=${Date.now()}`;
+      await updateProfile({ avatar_url: url });
+      setAvatarUrl(url);
+
+      // auto-complete checklist
+      await supabase.from("checklist_progress").upsert({
+        user_id: session.user.id,
+        item_key: "fill_personal_profile",
+        completed: true,
+        completed_at: new Date().toISOString(),
+      });
+
+      toast({ title: "✅ Foto atualizada!" });
+    } catch (e: any) {
+      toast({ title: "Erro no upload", description: e.message, variant: "destructive" });
+    } finally {
+      setAvatarUploading(false);
+    }
+  };
+
   const uploadResume = async (file: File) => {
     if (!session?.user) return;
     toast({ title: "Upload de currículo disponível em breve", description: "Funcionalidade em desenvolvimento." });
@@ -218,8 +256,18 @@ export default function Settings() {
           {/* Avatar header */}
           <div className="vc-card p-6">
             <div className="flex items-center gap-4">
-              <div className="w-16 h-16 rounded-2xl gradient-primary flex items-center justify-center text-white text-2xl font-bold">
-                {(profile?.name || "U")[0].toUpperCase()}
+              <div className="relative group">
+                {avatarUrl ? (
+                  <img src={avatarUrl} alt="" className="w-16 h-16 rounded-2xl object-cover" />
+                ) : (
+                  <div className="w-16 h-16 rounded-2xl gradient-primary flex items-center justify-center text-white text-2xl font-bold">
+                    {(profile?.name || "U")[0].toUpperCase()}
+                  </div>
+                )}
+                <label className="absolute inset-0 flex items-center justify-center bg-black/40 rounded-2xl opacity-0 group-hover:opacity-100 cursor-pointer transition-opacity">
+                  {avatarUploading ? <Loader2 className="h-5 w-5 text-white animate-spin" /> : <Camera className="h-5 w-5 text-white" />}
+                  <input type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={e => { const f = e.target.files?.[0]; if (f) uploadAvatar(f); }} />
+                </label>
               </div>
               <div>
                 <p className="font-semibold text-foreground text-lg">{profile?.name || "Seu Nome"}</p>
@@ -255,6 +303,10 @@ export default function Settings() {
               <div className="space-y-1.5">
                 <Label className="text-xs">Portfólio / Site</Label>
                 <Input value={portfolio} onChange={e => setPortfolio(e.target.value)} placeholder="seusite.com.br" className="bg-muted/40" />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs">Instagram (opcional)</Label>
+                <Input value={instagram} onChange={e => setInstagram(e.target.value)} placeholder="@seu_usuario ou link completo" className="bg-muted/40" />
               </div>
             </div>
           </div>

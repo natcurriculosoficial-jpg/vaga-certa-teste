@@ -17,6 +17,8 @@ export interface Profile {
   level: string | null;
   objective: string | null;
   onboarding_complete: boolean;
+  avatar_url: string | null;
+  instagram_url: string | null;
   created_at: string;
   updated_at: string;
 }

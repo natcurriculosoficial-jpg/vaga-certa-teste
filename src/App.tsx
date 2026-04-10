@@ -20,6 +20,8 @@ import Pricing from "@/pages/Pricing";
 import Members from "@/pages/Members";
 import CourseViewer from "@/pages/CourseViewer";
 import Admin from "@/pages/Admin";
+import Checklist from "@/pages/Checklist";
+import Community from "@/pages/Community";
 import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -65,9 +67,10 @@ function AppRoutes() {
         <Route path="/linkedin" element={<LinkedInPage user={user} />} />
         <Route path="/job-radar" element={<JobRadar />} />
         <Route path="/interview" element={<Interview user={user} />} />
+        <Route path="/checklist" element={<Checklist />} />
+        <Route path="/community" element={<Community />} />
         <Route path="/profile" element={<Profile user={user} onUpdate={updateProfile} />} />
         <Route path="/settings" element={<SettingsPage />} />
-        <Route path="/profile" element={<Navigate to="/settings" replace />} />
         <Route path="/pricing" element={<Pricing />} />
         <Route path="/members" element={<Members />} />
         <Route path="/members/course/:id" element={<CourseViewer />} />

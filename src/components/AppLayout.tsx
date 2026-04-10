@@ -5,8 +5,10 @@ import {
   LayoutDashboard, FileText, Linkedin, Radar, Mic,
   User, Settings, LogOut, Crown, ChevronRight, ChevronLeft,
   Search, Sun, Moon, Menu, X, BookOpen, Shield,
+  CheckSquare, Users,
 } from "lucide-react";
 import { useAdmin } from "@/hooks/useAdmin";
+import { useAuth } from "@/hooks/useAuth";
 import Logo from "./Logo";
 import { Button } from "./ui/button";
 import { Input } from "./ui/input";
@@ -21,11 +23,13 @@ import {
 
 const NAV_MAIN = [
   { label: "Início", icon: LayoutDashboard, path: "/dashboard" },
+  { label: "Minha Jornada", icon: CheckSquare, path: "/checklist" },
   { label: "Radar de Vagas", icon: Radar, path: "/job-radar" },
   { label: "Meu Currículo", icon: FileText, path: "/resume" },
   { label: "LinkedIn Campeão", icon: Linkedin, path: "/linkedin" },
   { label: "Simular Entrevista", icon: Mic, path: "/interview" },
   { label: "Área de Membros", icon: BookOpen, path: "/members" },
+  { label: "Comunidade", icon: Users, path: "/community" },
 ];
 
 const NAV_BOTTOM = [
@@ -43,6 +47,7 @@ export default function AppLayout({
   const location = useLocation();
   const { resolved, setTheme } = useTheme();
   const { isAdmin } = useAdmin();
+  const { user: profile } = useAuth();
   const [collapsed, setCollapsed] = useState(true);
   const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -223,9 +228,13 @@ export default function AppLayout({
                 </Button>
                 <button
                   onClick={() => navigate("/profile")}
-                  className="h-8 w-8 rounded-xl gradient-primary flex items-center justify-center text-white text-xs font-bold hover:opacity-90 transition-opacity shadow-sm"
+                  className="h-8 w-8 rounded-xl overflow-hidden gradient-primary flex items-center justify-center text-white text-xs font-bold hover:opacity-90 transition-opacity shadow-sm"
                 >
-                  U
+                  {profile?.avatar_url ? (
+                    <img src={profile.avatar_url} alt="" className="w-full h-full object-cover" />
+                  ) : (
+                    (profile?.name || "U")[0].toUpperCase()
+                  )}
                 </button>
               </div>
             </div>
