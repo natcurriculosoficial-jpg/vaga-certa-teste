@@ -256,8 +256,18 @@ export default function Settings() {
           {/* Avatar header */}
           <div className="vc-card p-6">
             <div className="flex items-center gap-4">
-              <div className="w-16 h-16 rounded-2xl gradient-primary flex items-center justify-center text-white text-2xl font-bold">
-                {(profile?.name || "U")[0].toUpperCase()}
+              <div className="relative group">
+                {avatarUrl ? (
+                  <img src={avatarUrl} alt="" className="w-16 h-16 rounded-2xl object-cover" />
+                ) : (
+                  <div className="w-16 h-16 rounded-2xl gradient-primary flex items-center justify-center text-white text-2xl font-bold">
+                    {(profile?.name || "U")[0].toUpperCase()}
+                  </div>
+                )}
+                <label className="absolute inset-0 flex items-center justify-center bg-black/40 rounded-2xl opacity-0 group-hover:opacity-100 cursor-pointer transition-opacity">
+                  {avatarUploading ? <Loader2 className="h-5 w-5 text-white animate-spin" /> : <Camera className="h-5 w-5 text-white" />}
+                  <input type="file" accept="image/jpeg,image/png,image/webp" className="hidden" onChange={e => { const f = e.target.files?.[0]; if (f) uploadAvatar(f); }} />
+                </label>
               </div>
               <div>
                 <p className="font-semibold text-foreground text-lg">{profile?.name || "Seu Nome"}</p>
@@ -293,6 +303,10 @@ export default function Settings() {
               <div className="space-y-1.5">
                 <Label className="text-xs">Portfólio / Site</Label>
                 <Input value={portfolio} onChange={e => setPortfolio(e.target.value)} placeholder="seusite.com.br" className="bg-muted/40" />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-xs">Instagram (opcional)</Label>
+                <Input value={instagram} onChange={e => setInstagram(e.target.value)} placeholder="@seu_usuario ou link completo" className="bg-muted/40" />
               </div>
             </div>
           </div>
