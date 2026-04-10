@@ -228,9 +228,13 @@ export default function AppLayout({
                 </Button>
                 <button
                   onClick={() => navigate("/profile")}
-                  className="h-8 w-8 rounded-xl gradient-primary flex items-center justify-center text-white text-xs font-bold hover:opacity-90 transition-opacity shadow-sm"
+                  className="h-8 w-8 rounded-xl overflow-hidden gradient-primary flex items-center justify-center text-white text-xs font-bold hover:opacity-90 transition-opacity shadow-sm"
                 >
-                  U
+                  {profile?.avatar_url ? (
+                    <img src={profile.avatar_url} alt="" className="w-full h-full object-cover" />
+                  ) : (
+                    (profile?.name || "U")[0].toUpperCase()
+                  )}
                 </button>
               </div>
             </div>
