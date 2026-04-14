@@ -25,6 +25,7 @@ export default function JobRadar() {
   const [searchParams, setSearchParams] = useSearchParams();
   const [jobs, setJobs] = useState<KanbanJob[]>([]);
   const [loading, setLoading] = useState(true);
+  const [activeTab, setActiveTab] = useState("search");
   const [filters, setFilters] = useState<JobFilters>(() => ({
     query: searchParams.get("q") || "",
     city: searchParams.get("city") || "",
@@ -269,8 +270,8 @@ export default function JobRadar() {
         </div>
       </div>
 
-      <Tabs defaultValue="search">
-        <TabsList className="bg-muted/50">
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <TabsList className="bg-muted/50 flex-wrap">
           <TabsTrigger value="search">Minhas Vagas</TabsTrigger>
           <TabsTrigger value="external" className="gap-1">
             <SearchIcon className="h-3 w-3" /> Buscar
@@ -307,10 +308,7 @@ export default function JobRadar() {
                       size="sm"
                       variant="outline"
                       className="gap-1"
-                      onClick={() => {
-                        const trigger = document.querySelector('[value="external"]') as HTMLElement;
-                        trigger?.click();
-                      }}
+                      onClick={() => setActiveTab("external")}
                     >
                       🔍 Buscar vagas
                     </Button>
