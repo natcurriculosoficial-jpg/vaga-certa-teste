@@ -24,8 +24,27 @@ serve(async (req) => {
         break;
 
       case "generate_bullets":
-        systemPrompt = "Você é um especialista em currículos profissionais brasileiros. Transforme descrições em bullet points de alto impacto.";
-        userPrompt = `Transforme o seguinte texto em bullet points profissionais para currículo${payload.role ? ` para o cargo de ${payload.role}` : ""}. Cada bullet deve seguir a estrutura: Ação + responsabilidade + resultado mensurável. Use verbos de ação no passado. Retorne apenas os bullets, um por linha, começando com "•":\n\n${payload.text}`;
+        systemPrompt = "Você é um especialista em currículos profissionais brasileiros de alto impacto. Sua missão é transformar descrições brutas de experiências em bullet points que impressionam recrutadores.";
+        userPrompt = `Transforme a descrição abaixo em exatamente entre 4 e 6 bullet points profissionais para currículo.
+
+Cargo da experiência: ${payload.experienceRole || "não informado"}
+Cargo desejado pelo candidato: ${payload.targetRole || "não informado"}
+Área profissional: ${payload.area || "não informada"}
+Nível de senioridade: ${payload.level || "não informado"}
+
+Descrição bruta da experiência:
+${payload.text}
+
+Regras obrigatórias:
+- Gere EXATAMENTE entre 4 e 6 bullets (nem mais, nem menos)
+- Cada bullet começa com "•"
+- Use verbos de ação no passado (ex: Gerenciei, Desenvolvi, Reduzi, Aumentei, Implementei, Coordenei)
+- Cada bullet deve ter: Verbo + ação realizada + resultado ou impacto (quando possível com números ou percentuais estimados)
+- Bullets curtos, diretos, com máximo de 2 linhas cada
+- Use o contexto do cargo "${payload.experienceRole || payload.targetRole || "profissional"}" para inferir responsabilidades típicas que complementem a descrição
+- Não repita informações entre bullets
+- Se a descrição for vaga, use o cargo como referência para adicionar responsabilidades típicas e plausíveis
+- Responda SOMENTE os bullets, um por linha, sem introdução, sem conclusão, sem aspas`;
         break;
 
       case "generate_objective":

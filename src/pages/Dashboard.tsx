@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
@@ -7,6 +8,7 @@ import {
 import { Button } from "@/components/ui/button";
 import type { Profile } from "@/hooks/useAuth";
 import { useChecklist } from "@/hooks/useChecklist";
+import { supabase } from "@/integrations/supabase/client";
 import FabMenu from "@/components/FabMenu";
 
 const container = {
@@ -18,27 +20,79 @@ const item = {
   visible: { opacity: 1, y: 0, transition: { duration: 0.3, ease: "easeOut" as const } },
 };
 
+interface SavedJob {
+  id: string;
+  title: string;
+  company: string;
+  location: string | null;
+  type: string | null;
+  url: string | null;
+  status: string;
+}
+
 export default function Dashboard({ user }: { user: Profile }) {
   const navigate = useNavigate();
   const { completedCount, total, percentage } = useChecklist();
 
+  const [resumeStatus, setResumeStatus] = useState({ hasExperience: false, hasBullets: false });
+  const [savedJobsCount, setSavedJobsCount] = useState(0);
+  const [recommendedJobs, setRecommendedJobs] = useState<SavedJob[]>([]);
+
+  useEffect(() => {
+    const fetchStatus = async () => {
+      const { data: { user: authUser } } = await supabase.auth.getUser();
+      if (!authUser) return;
+
+      const [expRes, jobsCountRes, jobsRes] = await Promise.all([
+        supabase.from("experiences").select("id, description").eq("user_id", authUser.id),
+        supabase.from("saved_jobs").select("id", { count: "exact", head: true }).eq("user_id", authUser.id),
+        supabase.from("saved_jobs").select("id, title, company, location, type, url, status")
+          .eq("user_id", authUser.id)
+          .in("status", ["saved", "applied", "process"])
+          .order("created_at", { ascending: false })
+          .limit(3),
+      ]);
+
+      const hasExp = (expRes.data?.length ?? 0) > 0;
+      const hasBullets = expRes.data?.some(e => e.description?.includes("•")) ?? false;
+      setResumeStatus({ hasExperience: hasExp, hasBullets });
+      setSavedJobsCount(jobsCountRes.count ?? 0);
+      setRecommendedJobs(jobsRes.data || []);
+    };
+    fetchStatus();
+  }, []);
+
+  const resumeComplete = resumeStatus.hasExperience && resumeStatus.hasBullets;
+
   const metrics = [
-    { label: "Currículo", value: "25%", sub: "completo", icon: FileText },
-    { label: "Candidaturas", value: "0", sub: "vagas salvas", icon: Target },
+    { label: "Currículo", value: resumeComplete ? "100%" : resumeStatus.hasExperience ? "50%" : "0%", sub: resumeComplete ? "completo" : "pendente", icon: FileText },
+    { label: "Candidaturas", value: String(savedJobsCount), sub: "vagas salvas", icon: Target },
     { label: "Entrevistas", value: "0", sub: "agendadas", icon: Mic },
-    { label: "LinkedIn", value: "0%", sub: "otimizado", icon: Linkedin },
+    { label: "LinkedIn", value: user.linkedin_url ? "100%" : "0%", sub: user.linkedin_url ? "conectado" : "pendente", icon: Linkedin },
   ];
 
   const nextSteps = [
-    { title: "Complete seu currículo", desc: "Preencha experiências e gere bullets com IA", path: "/resume", icon: FileText },
-    { title: "Otimize seu LinkedIn", desc: "Headline e resumo profissional com IA", path: "/linkedin", icon: Linkedin },
-    { title: "Busque vagas", desc: "Radar de vagas compatíveis com seu perfil", path: "/job-radar", icon: Radar },
-  ];
-
-  const sampleJobs = [
-    { title: "Analista de Marketing Digital", company: "TechCorp", location: "São Paulo · Remoto" },
-    { title: "Desenvolvedor Full Stack", company: "StartupXYZ", location: "Rio de Janeiro · Híbrido" },
-    { title: "Product Manager", company: "InovaTech", location: "Curitiba · Presencial" },
+    {
+      title: "Complete seu currículo",
+      desc: resumeComplete ? "✅ Concluído! Currículo com bullets de IA" : "Preencha experiências e gere bullets com IA",
+      path: "/resume",
+      icon: FileText,
+      done: resumeComplete,
+    },
+    {
+      title: "Otimize seu LinkedIn",
+      desc: user.linkedin_url ? "✅ LinkedIn conectado ao perfil" : "Headline e resumo profissional com IA",
+      path: "/linkedin",
+      icon: Linkedin,
+      done: !!user.linkedin_url,
+    },
+    {
+      title: "Busque vagas",
+      desc: savedJobsCount > 0 ? `✅ ${savedJobsCount} vaga(s) no tracker` : "Radar de vagas compatíveis com seu perfil",
+      path: "/job-radar",
+      icon: Radar,
+      done: savedJobsCount > 0,
+    },
   ];
 
   return (
@@ -129,16 +183,21 @@ export default function Dashboard({ user }: { user: Profile }) {
               whileHover={{ y: -3, transition: { duration: 0.15 } }}
               whileTap={{ scale: 0.98 }}
               onClick={() => navigate(step.path)}
-              className="vc-card text-left group hover-lift"
+              className={`vc-card text-left group hover-lift ${step.done ? "border border-green-500/30" : ""}`}
             >
-              <div className="p-2.5 rounded-xl gradient-primary w-fit mb-3">
-                <step.icon className="h-5 w-5 text-primary-foreground" />
+              <div className="flex justify-between items-start">
+                <div className={`p-2.5 rounded-xl w-fit mb-3 ${step.done ? "bg-green-500/10" : "gradient-primary"}`}>
+                  <step.icon className={`h-5 w-5 ${step.done ? "text-green-500" : "text-primary-foreground"}`} />
+                </div>
+                {step.done && <span className="text-green-500 text-lg">✅</span>}
               </div>
-              <h3 className="font-semibold text-foreground">{step.title}</h3>
-              <p className="text-sm text-muted-foreground mt-1.5 leading-relaxed">{step.desc}</p>
-              <div className="flex items-center gap-1 mt-3 text-sm text-primary opacity-0 group-hover:opacity-100 transition-all duration-200">
-                Começar <ArrowRight className="h-3 w-3" />
-              </div>
+              <h3 className={`font-semibold ${step.done ? "text-foreground/70" : "text-foreground"}`}>{step.title}</h3>
+              <p className={`text-sm mt-1.5 leading-relaxed ${step.done ? "text-green-600 dark:text-green-400" : "text-muted-foreground"}`}>{step.desc}</p>
+              {!step.done && (
+                <div className="flex items-center gap-1 mt-3 text-sm text-primary opacity-0 group-hover:opacity-100 transition-all duration-200">
+                  Começar <ArrowRight className="h-3 w-3" />
+                </div>
+              )}
             </motion.button>
           ))}
         </div>
@@ -158,19 +217,44 @@ export default function Dashboard({ user }: { user: Profile }) {
           </Button>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-          {sampleJobs.map((job, i) => (
-            <div key={i} className="vc-card space-y-3 hover-lift">
-              <div className="h-9 w-9 rounded-xl bg-accent flex items-center justify-center text-sm font-bold text-primary">
-                {job.company[0]}
-              </div>
-              <h3 className="font-semibold text-foreground text-sm">{job.title}</h3>
-              <p className="text-sm text-muted-foreground">{job.company}</p>
-              <p className="text-xs text-muted-foreground">{job.location}</p>
-              <Button variant="outline" size="sm" className="w-full rounded-xl" onClick={() => navigate("/job-radar")}>
-                Ver vaga
+          {recommendedJobs.length === 0 ? (
+            <div className="md:col-span-3 vc-card text-center py-8 space-y-3">
+              <Target className="h-10 w-10 text-muted-foreground mx-auto" />
+              <p className="font-medium text-foreground">Nenhuma vaga salva ainda</p>
+              <p className="text-sm text-muted-foreground max-w-sm mx-auto">
+                Use o Radar de Vagas para buscar oportunidades compatíveis com seu perfil de {user.target_role || "profissional"}
+              </p>
+              <Button onClick={() => navigate("/job-radar")} className="gradient-primary text-white">
+                Buscar vagas agora
               </Button>
             </div>
-          ))}
+          ) : (
+            recommendedJobs.map((job) => (
+              <div key={job.id} className="vc-card space-y-3 hover-lift">
+                <div className="flex justify-between items-start">
+                  <div className="h-9 w-9 rounded-xl bg-accent flex items-center justify-center text-sm font-bold text-primary">
+                    {job.company?.[0] ?? "?"}
+                  </div>
+                  {job.status && (
+                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-primary/10 text-primary font-medium">
+                      {job.status === "saved" ? "Salva" : job.status === "applied" ? "Candidatei" : "Em análise"}
+                    </span>
+                  )}
+                </div>
+                <h3 className="font-semibold text-foreground text-sm">{job.title}</h3>
+                <p className="text-sm text-muted-foreground">{job.company}</p>
+                <p className="text-xs text-muted-foreground">{job.location}</p>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="w-full rounded-xl"
+                  onClick={() => job.url ? window.open(job.url, "_blank") : navigate("/job-radar")}
+                >
+                  {job.url ? "Ver vaga" : "Ver no radar"}
+                </Button>
+              </div>
+            ))
+          )}
         </div>
       </motion.div>
 

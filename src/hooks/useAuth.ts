@@ -82,16 +82,22 @@ export function useAuth() {
     return true;
   }, []);
 
-  const signup = useCallback(async (name: string, email: string, password: string) => {
-    const { error } = await supabase.auth.signUp({
+  const signup = useCallback(async (name: string, email: string, password: string, phone?: string) => {
+    const { data, error } = await supabase.auth.signUp({
       email,
       password,
       options: {
-        data: { name },
-        emailRedirectTo: window.location.origin,
+        data: { name, phone },
+        emailRedirectTo: `${window.location.origin}/dashboard`,
       },
     });
     if (error) throw error;
+
+    if (data.user && phone) {
+      await supabase.from("profiles").update({ phone, name }).eq("user_id", data.user.id);
+    }
+
+    return data;
   }, []);
 
   const loginWithGoogle = useCallback(async () => {

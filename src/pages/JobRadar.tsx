@@ -269,8 +269,8 @@ export default function JobRadar() {
         </div>
       </div>
 
-      <Tabs defaultValue="search">
-        <TabsList className="bg-muted/50">
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
+        <TabsList className="bg-muted/50 flex-wrap">
           <TabsTrigger value="search">Minhas Vagas</TabsTrigger>
           <TabsTrigger value="external" className="gap-1">
             <SearchIcon className="h-3 w-3" /> Buscar

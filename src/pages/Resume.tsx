@@ -223,12 +223,33 @@ export default function Resume({ user }: { user: UserData }) {
   // AI features
   const generateBullets = async (id: string) => {
     const exp = experiences.find(e => e.id === id);
-    if (!exp?.description) return;
+    if (!exp) return;
+
     setAiLoading(id);
-    const result = await gemini.transformToBulletPoints(exp.description, user.target_role || undefined);
-    updateExp(id, "description", result);
-    setAiLoading(null);
-    toast({ title: "Bullets gerados com IA ✨" });
+    try {
+      const { data, error } = await supabase.functions.invoke("ai", {
+        body: {
+          action: "generate_bullets",
+          payload: {
+            text: exp.description || `Profissional atuando como ${exp.role} na empresa ${exp.company}`,
+            experienceRole: exp.role,
+            targetRole: user.target_role,
+            area: user.area,
+            level: user.level,
+          },
+        },
+      });
+      if (error) throw error;
+      const result = data?.text || "";
+      const updated = { ...exp, description: result };
+      setExperiences(p => p.map(e => e.id === id ? updated : e));
+      await saveExp(updated);
+      toast({ title: "✨ Bullets gerados com IA!", description: "Descrição atualizada com 4-6 pontos de impacto." });
+    } catch (err) {
+      toast({ title: "Erro ao gerar bullets", variant: "destructive" });
+    } finally {
+      setAiLoading(null);
+    }
   };
 
   const generateObj = async () => {
