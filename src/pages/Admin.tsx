@@ -22,6 +22,8 @@ interface Course { id: string; title: string; description: string | null; thumbn
 interface Module { id: string; course_id: string; title: string; sort_order: number; }
 interface Lesson { id: string; module_id: string; title: string; video_url: string | null; sort_order: number; }
 
+const ONBOARDING_COURSE_ID = '00000000-0000-0000-0000-000000000001';
+
 export default function Admin() {
   const { isAdmin, loading: roleLoading } = useAdmin();
   const [courses, setCourses] = useState<Course[]>([]);
