@@ -73,12 +73,12 @@ export default function AppLayout({
     };
 
     const colorClasses = variant === "warning"
-      ? "text-amber-400 hover:bg-amber-400/10"
+      ? "text-amber-300 hover:bg-amber-400/15"
       : variant === "danger"
-      ? "text-red-400 hover:bg-red-500/10 hover:text-red-300"
+      ? "text-red-300 hover:bg-red-500/15 hover:text-red-200"
       : active
-      ? "bg-white/10 text-white font-medium"
-      : "text-white/50 hover:bg-white/5 hover:text-white/90";
+      ? "bg-white/15 text-white font-medium border border-white/10"
+      : "text-white/60 hover:bg-white/10 hover:text-white";
 
     const button = (
       <motion.button
