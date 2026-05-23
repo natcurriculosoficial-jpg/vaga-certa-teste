@@ -14,6 +14,36 @@ export type Database = {
   }
   public: {
     Tables: {
+      certificates: {
+        Row: {
+          created_at: string
+          id: string
+          institution: string
+          name: string
+          sort_order: number
+          user_id: string
+          year: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          institution?: string
+          name: string
+          sort_order?: number
+          user_id: string
+          year?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          institution?: string
+          name?: string
+          sort_order?: number
+          user_id?: string
+          year?: string | null
+        }
+        Relationships: []
+      }
       checklist_progress: {
         Row: {
           completed: boolean
