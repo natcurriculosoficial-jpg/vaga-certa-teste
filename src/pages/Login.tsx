@@ -116,8 +116,12 @@ export default function Login() {
             </div>
 
             <Button type="submit" className="w-full h-11 rounded-xl gradient-primary text-white font-medium" disabled={loading}>
-              {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-              Entrar
+              {loading ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  Entrando...
+                </>
+              ) : "Entrar"}
             </Button>
           </form>
 
