@@ -36,8 +36,6 @@ const NAV_BOTTOM = [
   { label: "Configurações", icon: Settings, path: "/settings" },
 ];
 
-const SIDEBAR_BG = "#161616";
-
 export default function AppLayout({
   children,
   onLogout,
@@ -75,12 +73,12 @@ export default function AppLayout({
     };
 
     const colorClasses = variant === "warning"
-      ? "text-amber-400 hover:bg-amber-400/10"
+      ? "text-amber-300 hover:bg-amber-400/15"
       : variant === "danger"
-      ? "text-red-400 hover:bg-red-500/10 hover:text-red-300"
+      ? "text-red-300 hover:bg-red-500/15 hover:text-red-200"
       : active
-      ? "bg-white/10 text-white font-medium"
-      : "text-white/50 hover:bg-white/5 hover:text-white/90";
+      ? "bg-white/15 text-white font-medium border border-white/10"
+      : "text-white/60 hover:bg-white/10 hover:text-white";
 
     const button = (
       <motion.button
@@ -132,8 +130,13 @@ export default function AppLayout({
 
     return (
       <div
-        className="flex flex-col h-full text-white"
-        style={{ backgroundColor: SIDEBAR_BG }}
+        className="flex flex-col h-full text-white relative"
+        style={{
+          background: "linear-gradient(155deg, hsl(250 84% 60% / 0.25) 0%, hsl(246 80% 25% / 0.35) 45%, hsl(220 30% 8% / 0.55) 100%)",
+          backdropFilter: "blur(24px) saturate(1.6)",
+          WebkitBackdropFilter: "blur(24px) saturate(1.6)",
+          border: "1px solid hsl(250 84% 70% / 0.15)",
+        }}
       >
         {/* Logo / header */}
         <div className={`flex items-center ${isCollapsed ? "justify-center py-4 px-2" : "px-5 py-4 gap-3"}`}>
@@ -230,7 +233,7 @@ export default function AppLayout({
           animate={{ width: sidebarWidth }}
           transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
           className="hidden md:block fixed left-5 top-5 z-30 overflow-hidden rounded-2xl"
-          style={{ height: "calc(100vh - 40px)", boxShadow: "0 8px 32px rgba(0,0,0,0.4)" }}
+          style={{ height: "calc(100vh - 40px)", boxShadow: "0 20px 60px -10px hsl(250 84% 30% / 0.5), 0 8px 32px rgba(0,0,0,0.3)" }}
         >
           <SidebarContent />
         </motion.aside>
