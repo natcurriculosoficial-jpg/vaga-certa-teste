@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Sparkles, Copy, ExternalLink, Loader2 } from "lucide-react";
+import { Sparkles, Copy, ExternalLink, Loader2, Linkedin } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { UserData } from "@/hooks/useAuth";
 import * as gemini from "@/services/gemini";
@@ -11,8 +11,27 @@ import * as gemini from "@/services/gemini";
 const linkedinLinks: Record<string, string> = {
   headline: "https://www.linkedin.com/in/me/edit/intro/",
   about: "https://www.linkedin.com/in/me/edit/summary/",
-  experience: "https://www.linkedin.com/in/me/edit/experience/",
-  education: "https://www.linkedin.com/in/me/edit/education/",
+  experience: "https://www.linkedin.com/in/me/details/experience/",
+  education: "https://www.linkedin.com/in/me/details/education/",
+  highlights: "https://www.linkedin.com/in/me/edit/featured/",
+  competencies: "https://www.linkedin.com/in/me/details/skills/",
+  certifications: "https://www.linkedin.com/in/me/details/certifications/",
+  projects: "https://www.linkedin.com/in/me/details/projects/",
+  languages: "https://www.linkedin.com/in/me/details/languages/",
+  url: "https://www.linkedin.com/public-profile/settings",
+};
+
+const linkedinLabels: Record<string, string> = {
+  headline: "Editar Headline",
+  about: "Editar Sobre",
+  experience: "Ver Experiências",
+  education: "Ver Formação",
+  highlights: "Gerenciar Destaques",
+  competencies: "Gerenciar Competências",
+  certifications: "Gerenciar Certificações",
+  projects: "Gerenciar Projetos",
+  languages: "Gerenciar Idiomas",
+  url: "Personalizar URL",
 };
 
 const sections = [
@@ -65,8 +84,17 @@ export default function LinkedInPage({ user }: { user: UserData }) {
 
   return (
     <div className="p-4 md:p-8 max-w-4xl mx-auto space-y-6">
-      <h1 className="text-2xl font-bold text-foreground">💼 LinkedIn Campeão</h1>
-      <p className="text-muted-foreground">Otimize cada seção do seu LinkedIn com IA</p>
+      {/* Hero */}
+      <div className="relative overflow-hidden rounded-2xl gradient-primary p-6 md:p-8 text-white">
+        <div className="relative z-10">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/15 text-xs font-medium mb-3">
+            <Linkedin className="h-3.5 w-3.5" /> LinkedIn Optimizer
+          </div>
+          <h1 className="text-3xl md:text-4xl font-bold mb-1">💼 LinkedIn Campeão</h1>
+          <p className="text-white/85 text-sm md:text-base">Otimize cada seção do seu LinkedIn com IA — copie e cole direto</p>
+        </div>
+        <div className="absolute -right-10 -top-10 w-48 h-48 rounded-full bg-white/10 blur-2xl" />
+      </div>
 
       <div className="space-y-4">
         {sections.map(section => (
@@ -101,7 +129,7 @@ export default function LinkedInPage({ user }: { user: UserData }) {
               {linkedinLinks[section.id] && (
                 <Button size="sm" variant="ghost" asChild>
                   <a href={linkedinLinks[section.id]} target="_blank" rel="noopener noreferrer">
-                    <ExternalLink className="h-3 w-3 mr-1" /> Editar no LinkedIn
+                    <ExternalLink className="h-3 w-3 mr-1" /> {linkedinLabels[section.id] || "Editar no LinkedIn"}
                   </a>
                 </Button>
               )}
