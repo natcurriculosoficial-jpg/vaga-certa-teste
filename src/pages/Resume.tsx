@@ -17,6 +17,21 @@ import { Skeleton } from "@/components/ui/skeleton";
 interface Experience {
   id: string; company: string; role: string; period: string; description: string;
 }
+
+function groupExperiencesByCompany(experiences: Experience[]): { company: string; roles: { role: string; period: string; description: string }[] }[] {
+  const grouped: { company: string; roles: { role: string; period: string; description: string }[] }[] = [];
+  for (const exp of experiences) {
+    const companyLabel = exp.company?.trim() || "Sem empresa informada";
+    const key = companyLabel.toLowerCase();
+    const existing = grouped.find(g => g.company.trim().toLowerCase() === key);
+    if (existing) {
+      existing.roles.push({ role: exp.role, period: exp.period, description: exp.description });
+    } else {
+      grouped.push({ company: companyLabel, roles: [{ role: exp.role, period: exp.period, description: exp.description }] });
+    }
+  }
+  return grouped;
+}
 interface Education {
   id: string; institution: string; course: string; period: string; description?: string;
 }
