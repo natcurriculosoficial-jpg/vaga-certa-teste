@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Sparkles, Copy, ExternalLink, Loader2 } from "lucide-react";
+import { Sparkles, Copy, ExternalLink, Loader2, Linkedin } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { UserData } from "@/hooks/useAuth";
 import * as gemini from "@/services/gemini";
@@ -11,8 +11,27 @@ import * as gemini from "@/services/gemini";
 const linkedinLinks: Record<string, string> = {
   headline: "https://www.linkedin.com/in/me/edit/intro/",
   about: "https://www.linkedin.com/in/me/edit/summary/",
-  experience: "https://www.linkedin.com/in/me/edit/experience/",
-  education: "https://www.linkedin.com/in/me/edit/education/",
+  experience: "https://www.linkedin.com/in/me/details/experience/",
+  education: "https://www.linkedin.com/in/me/details/education/",
+  highlights: "https://www.linkedin.com/in/me/edit/featured/",
+  competencies: "https://www.linkedin.com/in/me/details/skills/",
+  certifications: "https://www.linkedin.com/in/me/details/certifications/",
+  projects: "https://www.linkedin.com/in/me/details/projects/",
+  languages: "https://www.linkedin.com/in/me/details/languages/",
+  url: "https://www.linkedin.com/public-profile/settings",
+};
+
+const linkedinLabels: Record<string, string> = {
+  headline: "Editar Headline",
+  about: "Editar Sobre",
+  experience: "Ver Experiências",
+  education: "Ver Formação",
+  highlights: "Gerenciar Destaques",
+  competencies: "Gerenciar Competências",
+  certifications: "Gerenciar Certificações",
+  projects: "Gerenciar Projetos",
+  languages: "Gerenciar Idiomas",
+  url: "Personalizar URL",
 };
 
 const sections = [
