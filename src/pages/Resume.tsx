@@ -319,7 +319,6 @@ export default function Resume({ user }: { user: UserData }) {
           <Tabs defaultValue="personal" className="w-full">
             <TabsList className="flex flex-wrap gap-1 h-auto bg-muted/50 p-1">
               <TabsTrigger value="personal" className="text-xs">Dados</TabsTrigger>
-              <TabsTrigger value="objective" className="text-xs">Objetivo</TabsTrigger>
               <TabsTrigger value="experience" className="text-xs">Experiências</TabsTrigger>
               <TabsTrigger value="education" className="text-xs">Formação</TabsTrigger>
               <TabsTrigger value="skills" className="text-xs">Habilidades</TabsTrigger>
@@ -339,28 +338,29 @@ export default function Resume({ user }: { user: UserData }) {
                     />
                   </div>
                 ))}
+                <div className="space-y-1 md:col-span-2">
+                  <Label className="text-xs">Resumo Profissional</Label>
+                  <Textarea
+                    value={objective}
+                    onChange={e => setObjective(e.target.value)}
+                    placeholder="Escreva ou gere com IA seu resumo profissional..."
+                    className="bg-muted/50 min-h-[100px]"
+                  />
+                  <div className="flex gap-2 flex-wrap mt-2">
+                    <Button size="sm" variant="outline" onClick={generateObj} disabled={aiLoading === "objective"}>
+                      {aiLoading === "objective" ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <Sparkles className="h-3 w-3 mr-1" />}
+                      Gerar com IA
+                    </Button>
+                    <Button size="sm" variant="ghost" onClick={improveObj} disabled={aiLoading === "objective" || !objective}>
+                      Melhorar texto
+                    </Button>
+                  </div>
+                </div>
               </div>
               <Button onClick={savePersonal} disabled={savingPersonal} className="w-full">
                 {savingPersonal ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : null}
                 Salvar dados pessoais
               </Button>
-            </TabsContent>
-
-            <TabsContent value="objective" className="glass-card p-5 space-y-4 mt-4">
-              <Textarea value={objective} onChange={e => setObjective(e.target.value)} placeholder="Seu objetivo profissional..." className="bg-muted/50 min-h-[120px]" />
-              <div className="flex gap-2 flex-wrap">
-                <Button size="sm" onClick={generateObj} disabled={aiLoading === "objective"}>
-                  {aiLoading === "objective" ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <Sparkles className="h-3 w-3 mr-1" />}
-                  Gerar com IA
-                </Button>
-                <Button size="sm" variant="outline" onClick={improveObj} disabled={aiLoading === "objective" || !objective}>
-                  Melhorar texto
-                </Button>
-                <Button size="sm" variant="outline" onClick={savePersonal} disabled={savingPersonal}>
-                  {savingPersonal ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : null}
-                  Salvar objetivo
-                </Button>
-              </div>
             </TabsContent>
 
             <TabsContent value="experience" className="space-y-4 mt-4">
