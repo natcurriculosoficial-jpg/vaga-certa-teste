@@ -76,7 +76,7 @@ function AppRoutes() {
         <Route path="/members/course/:id" element={<CourseViewer />} />
         <Route path="/admin" element={<Admin />} />
         <Route path="/" element={<Navigate to="/dashboard" replace />} />
-        <Route path="*" element={<NotFound />} />
+        <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Routes>
     </AppLayout>
   );
