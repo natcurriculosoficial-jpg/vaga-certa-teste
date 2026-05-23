@@ -134,6 +134,25 @@ export default function Dashboard({ user }: { user: Profile }) {
         </div>
       </motion.div>
 
+      {/* Micro banner — Como usar o app */}
+      <motion.div variants={item}>
+        <button
+          onClick={() => navigate("/members/course/00000000-0000-0000-0000-000000000001")}
+          className="vc-card w-full text-left hover-lift flex items-center gap-4 group border border-primary/10"
+        >
+          <div className="p-2.5 rounded-xl bg-gradient-to-br from-amber-400 to-orange-500 shrink-0">
+            <Play className="h-5 w-5 text-white" />
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-semibold text-foreground">🎓 Aprenda a usar o Vaga Certa</p>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              Tour completo pelo app — veja como aproveitar todas as ferramentas
+            </p>
+          </div>
+          <ArrowRight className="h-4 w-4 text-muted-foreground group-hover:text-primary transition-colors shrink-0" />
+        </button>
+      </motion.div>
+
       {/* Metrics */}
       <motion.div variants={item} className="grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4">
         {metrics.map(m => (
