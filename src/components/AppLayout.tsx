@@ -3,7 +3,7 @@ import { useNavigate, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   LayoutDashboard, FileText, Linkedin, Radar, Mic,
-  User, Settings, LogOut, Crown, ChevronRight, ChevronLeft,
+  Settings, LogOut, Crown, PanelLeft, PanelLeftClose,
   Search, Sun, Moon, Menu, X, BookOpen, Shield,
   CheckSquare, Users,
 } from "lucide-react";
@@ -36,6 +36,8 @@ const NAV_BOTTOM = [
   { label: "Configurações", icon: Settings, path: "/settings" },
 ];
 
+const SIDEBAR_BG = "#161616";
+
 export default function AppLayout({
   children,
   onLogout,
@@ -55,16 +57,16 @@ export default function AppLayout({
     icon: Icon,
     label,
     path,
-    badge,
     onClick,
     variant = "default",
+    isCollapsed,
   }: {
     icon: React.ElementType;
     label: string;
     path?: string;
-    badge?: number;
     onClick?: () => void;
     variant?: "default" | "warning" | "danger";
+    isCollapsed: boolean;
   }) => {
     const active = path ? location.pathname === path : false;
     const handleClick = () => {
@@ -73,46 +75,47 @@ export default function AppLayout({
     };
 
     const colorClasses = variant === "warning"
-      ? "text-amber-500 hover:text-amber-600 hover:bg-amber-500/10"
+      ? "text-amber-400 hover:bg-amber-400/10"
       : variant === "danger"
-      ? "text-red-500 hover:text-red-600 hover:bg-red-500/10"
+      ? "text-red-400 hover:bg-red-500/10 hover:text-red-300"
       : active
-      ? "bg-primary/10 text-primary font-medium"
-      : "text-sidebar-muted hover:text-sidebar-foreground hover:bg-sidebar-accent";
+      ? "bg-white/10 text-white font-medium"
+      : "text-white/50 hover:bg-white/5 hover:text-white/90";
 
     const button = (
-      <button
+      <motion.button
+        whileHover={{ scale: 1.02 }}
+        whileTap={{ scale: 0.98 }}
         onClick={handleClick}
-        className={`relative flex items-center transition-all duration-150 ${
-          collapsed
+        style={active && variant === "default" ? { boxShadow: "0 0 20px hsl(250 84% 60% / 0.35)" } : undefined}
+        className={`relative flex items-center transition-colors duration-150 ${
+          isCollapsed
             ? "w-10 h-10 justify-center rounded-[10px] mx-auto"
             : "w-full px-3 py-2.5 rounded-[10px] gap-3"
         } ${colorClasses}`}
       >
         <Icon className="h-5 w-5 shrink-0" strokeWidth={1.5} />
-        {!collapsed && (
-          <motion.span
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.05 }}
-            className="truncate text-sm font-medium"
-          >
-            {label}
-          </motion.span>
-        )}
-        {badge != null && badge > 0 && (
-          <span className="absolute top-0 right-0 min-w-[16px] h-[16px] rounded-full bg-red-500 text-white text-[9px] font-bold flex items-center justify-center px-1">
-            {badge > 9 ? "9+" : badge}
-          </span>
-        )}
-      </button>
+        <AnimatePresence>
+          {!isCollapsed && (
+            <motion.span
+              initial={{ opacity: 0, x: -4 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -4 }}
+              transition={{ duration: 0.15 }}
+              className="truncate text-sm font-medium"
+            >
+              {label}
+            </motion.span>
+          )}
+        </AnimatePresence>
+      </motion.button>
     );
 
-    if (collapsed) {
+    if (isCollapsed) {
       return (
         <Tooltip>
           <TooltipTrigger asChild>{button}</TooltipTrigger>
-          <TooltipContent side="right" className="text-xs font-medium ml-1">
+          <TooltipContent side="right" className="text-xs font-medium ml-2">
             {label}
           </TooltipContent>
         </Tooltip>
@@ -124,68 +127,110 @@ export default function AppLayout({
 
   const SidebarContent = ({ isMobile = false }: { isMobile?: boolean }) => {
     const isCollapsed = isMobile ? false : collapsed;
+    const firstName = profile?.name?.split(" ")[0] || "Usuário";
+    const today = new Date().toLocaleDateString("pt-BR", { day: "2-digit", month: "short", year: "numeric" });
 
     return (
-      <div className="flex flex-col h-full bg-sidebar text-sidebar-foreground">
-        {/* Logo */}
-        <div className={`flex items-center border-b border-sidebar-border ${isCollapsed ? "justify-center py-4 px-2" : "px-5 py-4"}`}>
-          {isCollapsed ? (
-            <div className="w-9 h-9 rounded-[10px] gradient-primary flex items-center justify-center">
-              <span className="text-xs font-bold text-white">VC</span>
-            </div>
-          ) : (
-            <Logo size="sm" />
-          )}
+      <div
+        className="flex flex-col h-full text-white"
+        style={{ backgroundColor: SIDEBAR_BG }}
+      >
+        {/* Logo / header */}
+        <div className={`flex items-center ${isCollapsed ? "justify-center py-4 px-2" : "px-5 py-4 gap-3"}`}>
+          <div className="w-9 h-9 rounded-[10px] gradient-primary flex items-center justify-center shrink-0">
+            <span className="text-xs font-bold text-white">VC</span>
+          </div>
+          <AnimatePresence>
+            {!isCollapsed && (
+              <motion.div
+                initial={{ opacity: 0, x: -8 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -8 }}
+                transition={{ duration: 0.15 }}
+                className="flex flex-col min-w-0"
+              >
+                <span className="text-sm font-semibold text-white truncate">Vaga Certa</span>
+                <span className="text-[11px] text-white/40 truncate">@{(profile?.name || "user").toLowerCase().split(" ")[0]}</span>
+              </motion.div>
+            )}
+          </AnimatePresence>
         </div>
+
+        {/* Gradient divider */}
+        <div className="h-px mx-3 bg-gradient-to-r from-transparent via-white/10 to-transparent" />
+
+        {/* Welcome */}
+        <AnimatePresence>
+          {!isCollapsed && (
+            <motion.div
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: "auto" }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.2 }}
+              className="px-5 py-3 overflow-hidden"
+            >
+              <p className="text-[11px] text-white/40 uppercase tracking-wide">Bem-vindo de volta</p>
+              <p className="text-sm font-medium text-white truncate">{firstName}</p>
+              <p className="text-[11px] text-white/30 mt-0.5">{today}</p>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
+        <div className="h-px mx-3 bg-gradient-to-r from-transparent via-white/10 to-transparent" />
 
         {/* Main nav */}
         <nav className="flex-1 px-2 py-3 space-y-1 overflow-y-auto">
           {NAV_MAIN.map(navItem => (
-            <SidebarItem key={navItem.path} icon={navItem.icon} label={navItem.label} path={navItem.path} />
+            <SidebarItem key={navItem.path} icon={navItem.icon} label={navItem.label} path={navItem.path} isCollapsed={isCollapsed} />
           ))}
         </nav>
 
         {/* Bottom */}
-        <div className="px-2 py-3 border-t border-sidebar-border space-y-1">
+        <div className="px-2 py-3 space-y-1">
+          <div className="h-px mb-2 bg-gradient-to-r from-transparent via-white/10 to-transparent" />
           {NAV_BOTTOM.map(navItem => (
-            <SidebarItem key={navItem.path} icon={navItem.icon} label={navItem.label} path={navItem.path} />
+            <SidebarItem key={navItem.path} icon={navItem.icon} label={navItem.label} path={navItem.path} isCollapsed={isCollapsed} />
           ))}
           {isAdmin && (
-            <SidebarItem icon={Shield} label="Admin" path="/admin" />
+            <SidebarItem icon={Shield} label="Admin" path="/admin" isCollapsed={isCollapsed} />
           )}
           <SidebarItem
             icon={Crown}
             label="Upgrade PRO"
             onClick={() => navigate("/pricing")}
             variant="warning"
+            isCollapsed={isCollapsed}
           />
-          <div className="pt-1 mt-1 border-t border-sidebar-border">
-            <SidebarItem icon={LogOut} label="Sair" onClick={onLogout} variant="danger" />
-          </div>
+          <SidebarItem icon={LogOut} label="Sair" onClick={onLogout} variant="danger" isCollapsed={isCollapsed} />
         </div>
 
         {/* Collapse toggle (desktop only) */}
         {!isMobile && (
           <button
             onClick={() => setCollapsed(c => !c)}
-            className="flex items-center justify-center py-3 border-t border-sidebar-border text-muted-foreground hover:text-sidebar-foreground transition-colors duration-200"
+            className="flex items-center justify-center py-3 border-t border-white/5 text-white/40 hover:text-white/90 transition-colors duration-200"
           >
-            {collapsed ? <ChevronRight className="h-4 w-4" /> : <ChevronLeft className="h-4 w-4" />}
+            {collapsed ? <PanelLeft className="h-4 w-4" /> : <PanelLeftClose className="h-4 w-4" />}
           </button>
         )}
       </div>
     );
   };
 
+  const sidebarWidth = collapsed ? 80 : 256;
+  // 20px left + width + 20px right gap = mainLeft
+  const mainLeft = sidebarWidth + 40;
+
   return (
     <TooltipProvider delayDuration={150}>
-      <div className="min-h-screen flex bg-background">
-        {/* Desktop Sidebar */}
+      <div className="min-h-screen bg-background">
+        {/* Desktop floating sidebar */}
         <motion.aside
           initial={false}
-          animate={{ width: collapsed ? 64 : 228 }}
-          transition={{ duration: 0.22, ease: [0.4, 0, 0.2, 1] }}
-          className="hidden md:flex flex-col fixed h-full z-30 overflow-hidden"
+          animate={{ width: sidebarWidth }}
+          transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
+          className="hidden md:block fixed left-5 top-5 z-30 overflow-hidden rounded-2xl"
+          style={{ height: "calc(100vh - 40px)", boxShadow: "0 8px 32px rgba(0,0,0,0.4)" }}
         >
           <SidebarContent />
         </motion.aside>
@@ -193,9 +238,9 @@ export default function AppLayout({
         {/* Desktop main */}
         <motion.main
           initial={false}
-          animate={{ marginLeft: collapsed ? 64 : 228 }}
-          transition={{ duration: 0.22, ease: [0.4, 0, 0.2, 1] }}
-          className="flex-1 hidden md:block"
+          animate={{ marginLeft: mainLeft }}
+          transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
+          className="hidden md:block min-h-screen"
         >
           {/* Topbar */}
           <header className="sticky top-0 z-20 bg-background/80 backdrop-blur-xl border-b border-border/50">
@@ -264,7 +309,8 @@ export default function AppLayout({
               animate={{ opacity: 1, x: 0 }}
               exit={{ opacity: 0, x: -280 }}
               transition={{ duration: 0.25 }}
-              className="md:hidden fixed inset-y-0 left-0 w-[280px] z-50"
+              className="md:hidden fixed inset-y-0 left-0 w-[280px] z-50 overflow-hidden rounded-r-2xl"
+              style={{ boxShadow: "0 8px 32px rgba(0,0,0,0.4)" }}
             >
               <SidebarContent isMobile />
             </motion.div>
@@ -284,31 +330,25 @@ export default function AppLayout({
         </AnimatePresence>
 
         {/* Mobile content */}
-        <main className="flex-1 md:hidden pb-20">
+        <main className="md:hidden pb-24">
           <PageTransition>{children}</PageTransition>
         </main>
 
-        {/* Bottom nav mobile */}
-        <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-background/90 backdrop-blur-xl border-t border-border/50 z-20 flex justify-around py-2 px-1">
-          {NAV_MAIN.map(navItem => {
+        {/* Bottom nav mobile - glass */}
+        <nav className="md:hidden fixed bottom-3 left-3 right-3 z-20 rounded-2xl border border-border/40 bg-background/70 backdrop-blur-xl shadow-lg px-2 py-2 flex justify-around">
+          {NAV_MAIN.slice(0, 5).map(navItem => {
             const active = location.pathname === navItem.path;
             return (
               <button
                 key={navItem.path}
+                title={navItem.label}
                 onClick={() => navigate(navItem.path)}
-                className={`relative flex flex-col items-center gap-0.5 px-3 py-1 rounded-lg transition-colors duration-200 ${
-                  active ? "text-primary" : "text-muted-foreground"
+                className={`relative flex flex-col items-center gap-0.5 px-3 py-1.5 rounded-xl transition-all duration-200 ${
+                  active ? "text-primary bg-primary/10" : "text-muted-foreground"
                 }`}
               >
                 <navItem.icon className="h-5 w-5" />
                 <span className="text-[10px] truncate max-w-[56px]">{navItem.label.split(" ")[0]}</span>
-                {active && (
-                  <motion.div
-                    layoutId="mobileActive"
-                    className="absolute -top-1 w-5 h-0.5 rounded-full bg-primary"
-                    transition={{ type: "spring", stiffness: 500, damping: 35 }}
-                  />
-                )}
               </button>
             );
           })}
