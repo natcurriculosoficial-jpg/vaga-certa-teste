@@ -447,50 +447,83 @@ export default function Resume({ user }: { user: UserData }) {
         {/* Preview */}
         <div className="lg:w-96 shrink-0">
           <div className="sticky top-4">
-            <div id="resume-preview" className="bg-white text-black rounded-xl p-6 space-y-4 text-sm">
-              <h2 className="text-lg font-bold border-b border-gray-200 pb-2">{personal.name || "Seu Nome"}</h2>
-              <div className="text-xs space-y-0.5 text-gray-500">
-                {personal.email && <p>{personal.email}</p>}
-                {personal.phone && <p>{personal.phone}</p>}
-                {personal.city && <p>{personal.city}</p>}
-              </div>
+            <div id="resume-preview" className="bg-white text-black rounded-xl p-8 text-sm" style={{ fontFamily: 'Arial, sans-serif', lineHeight: '1.4' }}>
+              <h2 className="text-center font-bold uppercase tracking-wide" style={{ fontFamily: 'Arial, sans-serif', fontSize: '18pt' }}>
+                {personal.name || "Seu Nome"}
+              </h2>
+              <p className="text-center text-xs text-gray-600 mt-1" style={{ fontFamily: 'Arial, sans-serif' }}>
+                {[personal.phone, personal.city, personal.linkedin, personal.portfolio].filter(Boolean).join(" | ")}
+              </p>
+
               {objective && (
-                <div><h3 className="font-semibold text-xs uppercase tracking-wider mb-1">Objetivo</h3><p className="text-xs text-gray-700">{objective}</p></div>
-              )}
-              {experiences.length > 0 && (
-                <div>
-                  <h3 className="font-semibold text-xs uppercase tracking-wider mb-2">Experiência</h3>
-                  {experiences.map(e => (
-                    <div key={e.id} className="mb-2">
-                      <p className="font-medium text-xs">{e.role}{e.company ? ` — ${e.company}` : ""}</p>
-                      {e.period && <p className="text-xs text-gray-400">{e.period}</p>}
-                      {e.description && <p className="text-xs text-gray-600 mt-0.5 whitespace-pre-line">{e.description}</p>}
-                    </div>
-                  ))}
+                <div className="mt-4">
+                  <p className="text-xs text-gray-800" style={{ fontFamily: 'Arial, sans-serif' }}>{objective}</p>
                 </div>
               )}
+
               {educations.length > 0 && (
-                <div>
-                  <h3 className="font-semibold text-xs uppercase tracking-wider mb-2">Formação</h3>
+                <div className="mt-5">
+                  <h3 className="font-bold text-xs uppercase tracking-wider border-b border-gray-300 pb-1 mb-2" style={{ fontFamily: 'Arial, sans-serif' }}>
+                    Formação Acadêmica
+                  </h3>
                   {educations.map(e => (
-                    <div key={e.id} className="mb-1">
-                      <p className="font-medium text-xs">{e.course}{e.institution ? ` — ${e.institution}` : ""}</p>
-                      {e.period && <p className="text-xs text-gray-400">{e.period}</p>}
+                    <div key={e.id} className="mb-1.5">
+                      <p className="font-semibold text-xs" style={{ fontFamily: 'Arial, sans-serif' }}>{e.course}</p>
+                      <p className="text-xs text-gray-500" style={{ fontFamily: 'Arial, sans-serif' }}>
+                        {e.institution}{e.period ? ` | ${e.period}` : ""}
+                      </p>
                     </div>
                   ))}
                 </div>
               )}
+
+              {experiences.length > 0 && (() => {
+                const grouped = groupExperiencesByCompany(experiences);
+                return (
+                  <div className="mt-5">
+                    <h3 className="font-bold text-xs uppercase tracking-wider border-b border-gray-300 pb-1 mb-2" style={{ fontFamily: 'Arial, sans-serif' }}>
+                      Experiência Profissional
+                    </h3>
+                    {grouped.map((group, gi) => (
+                      <div key={gi} className="mb-3">
+                        <p className="font-bold text-xs italic" style={{ fontFamily: 'Arial, sans-serif' }}>{group.company}</p>
+                        {group.roles.map((role, ri) => (
+                          <div key={ri} className="ml-3 mb-1.5">
+                            <p className="text-xs" style={{ fontFamily: 'Arial, sans-serif' }}>
+                              <span className="font-semibold">{role.role}</span>
+                              {role.period ? <span className="text-gray-500"> | {role.period}</span> : null}
+                            </p>
+                            {role.description && (
+                              <p className="text-xs text-gray-700 whitespace-pre-line ml-1 mt-0.5" style={{ fontFamily: 'Arial, sans-serif' }}>
+                                {role.description}
+                              </p>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    ))}
+                  </div>
+                );
+              })()}
+
               {skillNames.length > 0 && (
-                <div>
-                  <h3 className="font-semibold text-xs uppercase tracking-wider mb-1">Habilidades</h3>
-                  <p className="text-xs text-gray-600">{skillNames.join(" • ")}</p>
+                <div className="mt-5">
+                  <h3 className="font-bold text-xs uppercase tracking-wider border-b border-gray-300 pb-1 mb-2" style={{ fontFamily: 'Arial, sans-serif' }}>
+                    Habilidades e Ferramentas
+                  </h3>
+                  <p className="text-xs text-gray-700" style={{ fontFamily: 'Arial, sans-serif' }}>{skillNames.join(" • ")}</p>
                 </div>
               )}
+
               {languages.length > 0 && (
-                <div>
-                  <h3 className="font-semibold text-xs uppercase tracking-wider mb-1">Idiomas</h3>
+                <div className="mt-5">
+                  <h3 className="font-bold text-xs uppercase tracking-wider border-b border-gray-300 pb-1 mb-2" style={{ fontFamily: 'Arial, sans-serif' }}>
+                    Idiomas
+                  </h3>
                   {languages.map((l) => (
-                    <p key={l.id} className="text-xs text-gray-600">{l.language} — {l.level}</p>
+                    <p key={l.id} className="text-xs text-gray-700" style={{ fontFamily: 'Arial, sans-serif' }}>
+                      {l.language} — {l.level}
+                    </p>
                   ))}
                 </div>
               )}
