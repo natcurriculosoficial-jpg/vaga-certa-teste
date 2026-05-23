@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
   FileText, Linkedin, Radar, Mic, ArrowRight,
-  TrendingUp, Sparkles, Target, CheckSquare,
+  TrendingUp, Sparkles, Target, CheckSquare, Play,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { Profile } from "@/hooks/useAuth";
