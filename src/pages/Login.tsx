@@ -26,7 +26,8 @@ export default function Login() {
     setLoading(true);
     try {
       await login(email, password);
-      navigate("/dashboard");
+      // Não chamar navigate — onAuthStateChange detecta o login
+      // e AppRoutes redireciona para /dashboard automaticamente.
     } catch (err: any) {
       let msg = "Erro ao entrar";
       if (err.message?.includes("Invalid login credentials")) {
@@ -37,7 +38,6 @@ export default function Login() {
         msg = err.message;
       }
       toast({ title: msg, variant: "destructive" });
-    } finally {
       setLoading(false);
     }
   };
