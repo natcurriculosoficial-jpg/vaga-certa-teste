@@ -36,8 +36,6 @@ const NAV_BOTTOM = [
   { label: "Configurações", icon: Settings, path: "/settings" },
 ];
 
-const SIDEBAR_BG = "#161616";
-
 export default function AppLayout({
   children,
   onLogout,
