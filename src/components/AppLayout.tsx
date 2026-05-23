@@ -130,8 +130,13 @@ export default function AppLayout({
 
     return (
       <div
-        className="flex flex-col h-full text-white"
-        style={{ backgroundColor: SIDEBAR_BG }}
+        className="flex flex-col h-full text-white relative"
+        style={{
+          background: "linear-gradient(155deg, hsl(250 84% 60% / 0.25) 0%, hsl(246 80% 25% / 0.35) 45%, hsl(220 30% 8% / 0.55) 100%)",
+          backdropFilter: "blur(24px) saturate(1.6)",
+          WebkitBackdropFilter: "blur(24px) saturate(1.6)",
+          border: "1px solid hsl(250 84% 70% / 0.15)",
+        }}
       >
         {/* Logo / header */}
         <div className={`flex items-center ${isCollapsed ? "justify-center py-4 px-2" : "px-5 py-4 gap-3"}`}>
