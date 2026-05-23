@@ -26,7 +26,8 @@ export default function Login() {
     setLoading(true);
     try {
       await login(email, password);
-      navigate("/dashboard");
+      // Não chamar navigate — onAuthStateChange detecta o login
+      // e AppRoutes redireciona para /dashboard automaticamente.
     } catch (err: any) {
       let msg = "Erro ao entrar";
       if (err.message?.includes("Invalid login credentials")) {
@@ -37,7 +38,6 @@ export default function Login() {
         msg = err.message;
       }
       toast({ title: msg, variant: "destructive" });
-    } finally {
       setLoading(false);
     }
   };
@@ -116,8 +116,12 @@ export default function Login() {
             </div>
 
             <Button type="submit" className="w-full h-11 rounded-xl gradient-primary text-white font-medium" disabled={loading}>
-              {loading ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-              Entrar
+              {loading ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                  Entrando...
+                </>
+              ) : "Entrar"}
             </Button>
           </form>
 

@@ -22,6 +22,8 @@ interface Course { id: string; title: string; description: string | null; thumbn
 interface Module { id: string; course_id: string; title: string; sort_order: number; }
 interface Lesson { id: string; module_id: string; title: string; video_url: string | null; sort_order: number; }
 
+const ONBOARDING_COURSE_ID = '00000000-0000-0000-0000-000000000001';
+
 export default function Admin() {
   const { isAdmin, loading: roleLoading } = useAdmin();
   const [courses, setCourses] = useState<Course[]>([]);
@@ -228,9 +230,11 @@ export default function Admin() {
                     <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => { setEditCourse(course); setCourseDialog(true); }}>
                       <Pencil className="h-3.5 w-3.5" />
                     </Button>
-                    <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => deleteCourse(course.id)}>
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </Button>
+                    {course.id !== ONBOARDING_COURSE_ID && (
+                      <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive" onClick={() => deleteCourse(course.id)}>
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </Button>
+                    )}
                   </div>
                 </div>
 

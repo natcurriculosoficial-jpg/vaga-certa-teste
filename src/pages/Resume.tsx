@@ -17,6 +17,21 @@ import { Skeleton } from "@/components/ui/skeleton";
 interface Experience {
   id: string; company: string; role: string; period: string; description: string;
 }
+
+function groupExperiencesByCompany(experiences: Experience[]): { company: string; roles: { role: string; period: string; description: string }[] }[] {
+  const grouped: { company: string; roles: { role: string; period: string; description: string }[] }[] = [];
+  for (const exp of experiences) {
+    const companyLabel = exp.company?.trim() || "Sem empresa informada";
+    const key = companyLabel.toLowerCase();
+    const existing = grouped.find(g => g.company.trim().toLowerCase() === key);
+    if (existing) {
+      existing.roles.push({ role: exp.role, period: exp.period, description: exp.description });
+    } else {
+      grouped.push({ company: companyLabel, roles: [{ role: exp.role, period: exp.period, description: exp.description }] });
+    }
+  }
+  return grouped;
+}
 interface Education {
   id: string; institution: string; course: string; period: string; description?: string;
 }
@@ -304,7 +319,6 @@ export default function Resume({ user }: { user: UserData }) {
           <Tabs defaultValue="personal" className="w-full">
             <TabsList className="flex flex-wrap gap-1 h-auto bg-muted/50 p-1">
               <TabsTrigger value="personal" className="text-xs">Dados</TabsTrigger>
-              <TabsTrigger value="objective" className="text-xs">Objetivo</TabsTrigger>
               <TabsTrigger value="experience" className="text-xs">Experiências</TabsTrigger>
               <TabsTrigger value="education" className="text-xs">Formação</TabsTrigger>
               <TabsTrigger value="skills" className="text-xs">Habilidades</TabsTrigger>
@@ -324,28 +338,29 @@ export default function Resume({ user }: { user: UserData }) {
                     />
                   </div>
                 ))}
+                <div className="space-y-1 md:col-span-2">
+                  <Label className="text-xs">Resumo Profissional</Label>
+                  <Textarea
+                    value={objective}
+                    onChange={e => setObjective(e.target.value)}
+                    placeholder="Escreva ou gere com IA seu resumo profissional..."
+                    className="bg-muted/50 min-h-[100px]"
+                  />
+                  <div className="flex gap-2 flex-wrap mt-2">
+                    <Button size="sm" variant="outline" onClick={generateObj} disabled={aiLoading === "objective"}>
+                      {aiLoading === "objective" ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <Sparkles className="h-3 w-3 mr-1" />}
+                      Gerar com IA
+                    </Button>
+                    <Button size="sm" variant="ghost" onClick={improveObj} disabled={aiLoading === "objective" || !objective}>
+                      Melhorar texto
+                    </Button>
+                  </div>
+                </div>
               </div>
               <Button onClick={savePersonal} disabled={savingPersonal} className="w-full">
                 {savingPersonal ? <Loader2 className="h-4 w-4 animate-spin mr-1" /> : null}
                 Salvar dados pessoais
               </Button>
-            </TabsContent>
-
-            <TabsContent value="objective" className="glass-card p-5 space-y-4 mt-4">
-              <Textarea value={objective} onChange={e => setObjective(e.target.value)} placeholder="Seu objetivo profissional..." className="bg-muted/50 min-h-[120px]" />
-              <div className="flex gap-2 flex-wrap">
-                <Button size="sm" onClick={generateObj} disabled={aiLoading === "objective"}>
-                  {aiLoading === "objective" ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <Sparkles className="h-3 w-3 mr-1" />}
-                  Gerar com IA
-                </Button>
-                <Button size="sm" variant="outline" onClick={improveObj} disabled={aiLoading === "objective" || !objective}>
-                  Melhorar texto
-                </Button>
-                <Button size="sm" variant="outline" onClick={savePersonal} disabled={savingPersonal}>
-                  {savingPersonal ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : null}
-                  Salvar objetivo
-                </Button>
-              </div>
             </TabsContent>
 
             <TabsContent value="experience" className="space-y-4 mt-4">
@@ -432,50 +447,83 @@ export default function Resume({ user }: { user: UserData }) {
         {/* Preview */}
         <div className="lg:w-96 shrink-0">
           <div className="sticky top-4">
-            <div id="resume-preview" className="bg-white text-black rounded-xl p-6 space-y-4 text-sm">
-              <h2 className="text-lg font-bold border-b border-gray-200 pb-2">{personal.name || "Seu Nome"}</h2>
-              <div className="text-xs space-y-0.5 text-gray-500">
-                {personal.email && <p>{personal.email}</p>}
-                {personal.phone && <p>{personal.phone}</p>}
-                {personal.city && <p>{personal.city}</p>}
-              </div>
+            <div id="resume-preview" className="bg-white text-black rounded-xl p-8 text-sm" style={{ fontFamily: 'Arial, sans-serif', lineHeight: '1.4' }}>
+              <h2 className="text-center font-bold uppercase tracking-wide" style={{ fontFamily: 'Arial, sans-serif', fontSize: '18pt' }}>
+                {personal.name || "Seu Nome"}
+              </h2>
+              <p className="text-center text-xs text-gray-600 mt-1" style={{ fontFamily: 'Arial, sans-serif' }}>
+                {[personal.phone, personal.city, personal.linkedin, personal.portfolio].filter(Boolean).join(" | ")}
+              </p>
+
               {objective && (
-                <div><h3 className="font-semibold text-xs uppercase tracking-wider mb-1">Objetivo</h3><p className="text-xs text-gray-700">{objective}</p></div>
-              )}
-              {experiences.length > 0 && (
-                <div>
-                  <h3 className="font-semibold text-xs uppercase tracking-wider mb-2">Experiência</h3>
-                  {experiences.map(e => (
-                    <div key={e.id} className="mb-2">
-                      <p className="font-medium text-xs">{e.role}{e.company ? ` — ${e.company}` : ""}</p>
-                      {e.period && <p className="text-xs text-gray-400">{e.period}</p>}
-                      {e.description && <p className="text-xs text-gray-600 mt-0.5 whitespace-pre-line">{e.description}</p>}
-                    </div>
-                  ))}
+                <div className="mt-4">
+                  <p className="text-xs text-gray-800" style={{ fontFamily: 'Arial, sans-serif' }}>{objective}</p>
                 </div>
               )}
+
               {educations.length > 0 && (
-                <div>
-                  <h3 className="font-semibold text-xs uppercase tracking-wider mb-2">Formação</h3>
+                <div className="mt-5">
+                  <h3 className="font-bold text-xs uppercase tracking-wider border-b border-gray-300 pb-1 mb-2" style={{ fontFamily: 'Arial, sans-serif' }}>
+                    Formação Acadêmica
+                  </h3>
                   {educations.map(e => (
-                    <div key={e.id} className="mb-1">
-                      <p className="font-medium text-xs">{e.course}{e.institution ? ` — ${e.institution}` : ""}</p>
-                      {e.period && <p className="text-xs text-gray-400">{e.period}</p>}
+                    <div key={e.id} className="mb-1.5">
+                      <p className="font-semibold text-xs" style={{ fontFamily: 'Arial, sans-serif' }}>{e.course}</p>
+                      <p className="text-xs text-gray-500" style={{ fontFamily: 'Arial, sans-serif' }}>
+                        {e.institution}{e.period ? ` | ${e.period}` : ""}
+                      </p>
                     </div>
                   ))}
                 </div>
               )}
+
+              {experiences.length > 0 && (() => {
+                const grouped = groupExperiencesByCompany(experiences);
+                return (
+                  <div className="mt-5">
+                    <h3 className="font-bold text-xs uppercase tracking-wider border-b border-gray-300 pb-1 mb-2" style={{ fontFamily: 'Arial, sans-serif' }}>
+                      Experiência Profissional
+                    </h3>
+                    {grouped.map((group, gi) => (
+                      <div key={gi} className="mb-3">
+                        <p className="font-bold text-xs italic" style={{ fontFamily: 'Arial, sans-serif' }}>{group.company}</p>
+                        {group.roles.map((role, ri) => (
+                          <div key={ri} className="ml-3 mb-1.5">
+                            <p className="text-xs" style={{ fontFamily: 'Arial, sans-serif' }}>
+                              <span className="font-semibold">{role.role}</span>
+                              {role.period ? <span className="text-gray-500"> | {role.period}</span> : null}
+                            </p>
+                            {role.description && (
+                              <p className="text-xs text-gray-700 whitespace-pre-line ml-1 mt-0.5" style={{ fontFamily: 'Arial, sans-serif' }}>
+                                {role.description}
+                              </p>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    ))}
+                  </div>
+                );
+              })()}
+
               {skillNames.length > 0 && (
-                <div>
-                  <h3 className="font-semibold text-xs uppercase tracking-wider mb-1">Habilidades</h3>
-                  <p className="text-xs text-gray-600">{skillNames.join(" • ")}</p>
+                <div className="mt-5">
+                  <h3 className="font-bold text-xs uppercase tracking-wider border-b border-gray-300 pb-1 mb-2" style={{ fontFamily: 'Arial, sans-serif' }}>
+                    Habilidades e Ferramentas
+                  </h3>
+                  <p className="text-xs text-gray-700" style={{ fontFamily: 'Arial, sans-serif' }}>{skillNames.join(" • ")}</p>
                 </div>
               )}
+
               {languages.length > 0 && (
-                <div>
-                  <h3 className="font-semibold text-xs uppercase tracking-wider mb-1">Idiomas</h3>
+                <div className="mt-5">
+                  <h3 className="font-bold text-xs uppercase tracking-wider border-b border-gray-300 pb-1 mb-2" style={{ fontFamily: 'Arial, sans-serif' }}>
+                    Idiomas
+                  </h3>
                   {languages.map((l) => (
-                    <p key={l.id} className="text-xs text-gray-600">{l.language} — {l.level}</p>
+                    <p key={l.id} className="text-xs text-gray-700" style={{ fontFamily: 'Arial, sans-serif' }}>
+                      {l.language} — {l.level}
+                    </p>
                   ))}
                 </div>
               )}
