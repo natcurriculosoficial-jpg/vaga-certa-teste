@@ -229,8 +229,8 @@ export default function AppLayout({
           initial={false}
           animate={{ width: sidebarWidth }}
           transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
-          className="hidden md:block fixed left-5 top-5 z-30 overflow-hidden rounded-2xl"
-          style={{ height: "calc(100vh - 40px)", boxShadow: "0 20px 60px -10px hsl(250 84% 30% / 0.5), 0 8px 32px rgba(0,0,0,0.3)" }}
+          className="hidden md:block fixed left-5 top-5 z-30 overflow-hidden rounded-2xl shadow-2xl"
+          style={{ height: "calc(100vh - 40px)" }}
         >
           <SidebarContent />
         </motion.aside>
