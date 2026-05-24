@@ -130,12 +130,9 @@ export default function AppLayout({
 
     return (
       <div
-        className="flex flex-col h-full text-white relative"
+        className="flex flex-col h-full text-white relative bg-[hsl(220_25%_8%)]"
         style={{
-          background: "linear-gradient(155deg, hsl(250 84% 60% / 0.25) 0%, hsl(246 80% 25% / 0.35) 45%, hsl(220 30% 8% / 0.55) 100%)",
-          backdropFilter: "blur(24px) saturate(1.6)",
-          WebkitBackdropFilter: "blur(24px) saturate(1.6)",
-          border: "1px solid hsl(250 84% 70% / 0.15)",
+          border: "1px solid hsl(220 14% 20%)",
         }}
       >
         {/* Logo / header */}
