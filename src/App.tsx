@@ -66,10 +66,10 @@ function AppRoutes() {
         <Route path="/dashboard" element={<Dashboard user={user} />} />
         <Route path="/resume" element={<Resume user={user} />} />
         <Route path="/linkedin" element={<LinkedInPage user={user} />} />
-        <Route path="/job-radar" element={<JobRadar />} />
-        <Route path="/interview" element={<Interview user={user} />} />
+        <Route path="/job-radar" element={<FeatureGate feature="job_tracker" requiredPlan="candidato"><JobRadar /></FeatureGate>} />
+        <Route path="/interview" element={<FeatureGate feature="interview" requiredPlan="candidato"><Interview user={user} /></FeatureGate>} />
         <Route path="/checklist" element={<Checklist />} />
-        <Route path="/community" element={<Community />} />
+        <Route path="/community" element={<FeatureGate feature="community_read" requiredPlan="candidato"><Community /></FeatureGate>} />
         <Route path="/profile" element={<Profile user={user} onUpdate={updateProfile} />} />
         <Route path="/settings" element={<SettingsPage />} />
         <Route path="/pricing" element={<Pricing />} />
