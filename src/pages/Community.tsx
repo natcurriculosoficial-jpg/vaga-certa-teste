@@ -33,6 +33,8 @@ const SIDEBAR_FILTERS: { id: FeedFilter; label: string; icon: React.ElementType 
 
 export default function Community() {
   const { posts, loading, filter, setFilter, topicFilter, setTopicFilter, hasMore, loadMore, toggleLike, toggleFavorite, refetch } = useCommunityPosts();
+  const { plan } = usePlan();
+  const canWrite = plan.hasCommunityWrite;
   const [topics, setTopics] = useState<Topic[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [profileUserId, setProfileUserId] = useState<string | null>(null);
