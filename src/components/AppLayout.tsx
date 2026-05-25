@@ -20,6 +20,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import CreditsIndicator from "./CreditsIndicator";
 
 const NAV_MAIN = [
   { label: "Início", icon: LayoutDashboard, path: "/dashboard" },
@@ -189,6 +190,9 @@ export default function AppLayout({
 
         {/* Bottom */}
         <div className="px-2 py-3 space-y-1">
+          <div className={isCollapsed ? "mb-1" : "mb-2 px-1"}>
+            <CreditsIndicator collapsed={isCollapsed} />
+          </div>
           <div className="h-px mb-2 bg-gradient-to-r from-transparent via-white/10 to-transparent" />
           {NAV_BOTTOM.map(navItem => (
             <SidebarItem key={navItem.path} icon={navItem.icon} label={navItem.label} path={navItem.path} isCollapsed={isCollapsed} />
