@@ -19,6 +19,8 @@ export interface Profile {
   onboarding_complete: boolean;
   avatar_url: string | null;
   instagram_url: string | null;
+  current_plan: string;
+  trial_used: boolean;
   created_at: string;
   updated_at: string;
 }
