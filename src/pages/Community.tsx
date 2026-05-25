@@ -10,6 +10,8 @@ import { useCommunityPosts, FeedFilter } from "@/hooks/useCommunityPosts";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import CreatePost from "@/components/community/CreatePost";
+import { usePlan } from "@/hooks/usePlan";
+import { Lock } from "lucide-react";
 import PostCard from "@/components/community/PostCard";
 import UserProfileSheet from "@/components/community/UserProfileSheet";
 import {
