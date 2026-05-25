@@ -1,5 +1,6 @@
+import { useEffect } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Route, Routes, Navigate } from "react-router-dom";
+import { BrowserRouter, Route, Routes, Navigate, useNavigate } from "react-router-dom";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -39,6 +40,20 @@ import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient();
 
+function PostLoginRedirect() {
+  const navigate = useNavigate();
+  useEffect(() => {
+    try {
+      const target = sessionStorage.getItem("postLoginRedirect");
+      if (target) {
+        sessionStorage.removeItem("postLoginRedirect");
+        navigate(target, { replace: true });
+      }
+    } catch {}
+  }, [navigate]);
+  return null;
+}
+
 function AppRoutes() {
   const { user, loading, login, signup, loginWithGoogle, updateProfile, logout } = useAuth();
 
@@ -74,6 +89,8 @@ function AppRoutes() {
 
   return (
     <AppLayout onLogout={logout}>
+      <PostLoginRedirect />
+
       <Routes>
         <Route path="/dashboard" element={<Dashboard user={user} />} />
         <Route path="/resume" element={<Resume user={user} />} />
