@@ -73,8 +73,8 @@ function AppRoutes() {
         <Route path="/profile" element={<Profile user={user} onUpdate={updateProfile} />} />
         <Route path="/settings" element={<SettingsPage />} />
         <Route path="/pricing" element={<Pricing />} />
-        <Route path="/members" element={<Members />} />
-        <Route path="/members/course/:id" element={<CourseViewer />} />
+        <Route path="/members" element={<FeatureGate feature="all_courses" requiredPlan="essencial"><Members /></FeatureGate>} />
+        <Route path="/members/course/:id" element={<GatedCourseViewer />} />
         <Route path="/admin" element={<Admin />} />
         <Route path="/" element={<Navigate to="/dashboard" replace />} />
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
