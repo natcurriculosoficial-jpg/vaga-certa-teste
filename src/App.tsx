@@ -18,6 +18,7 @@ import Profile from "@/pages/Profile";
 import SettingsPage from "@/pages/Settings";
 import Pricing from "@/pages/Pricing";
 import Members from "@/pages/Members";
+import FeatureGate from "@/components/FeatureGate";
 import CourseViewer from "@/pages/CourseViewer";
 import Admin from "@/pages/Admin";
 import Checklist from "@/pages/Checklist";
