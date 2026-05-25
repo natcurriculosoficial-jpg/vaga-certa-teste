@@ -73,25 +73,27 @@ export default function AppLayout({
     };
 
     const colorClasses = variant === "warning"
-      ? "text-amber-300 hover:bg-amber-400/15"
+      ? "text-amber-300 hover:bg-amber-400/10"
       : variant === "danger"
-      ? "text-red-300 hover:bg-red-500/15 hover:text-red-200"
+      ? "text-red-300 hover:bg-red-500/10 hover:text-red-200"
       : active
-      ? "bg-white/15 text-white font-medium border border-white/10"
-      : "text-white/60 hover:bg-white/10 hover:text-white";
+      ? "bg-primary/15 text-white font-medium"
+      : "text-white/60 hover:bg-white/[0.04] hover:text-white";
 
     const button = (
       <motion.button
         whileHover={{ scale: 1.02 }}
         whileTap={{ scale: 0.98 }}
         onClick={handleClick}
-        style={active && variant === "default" ? { boxShadow: "0 0 20px hsl(250 84% 60% / 0.35)" } : undefined}
         className={`relative flex items-center transition-colors duration-150 ${
           isCollapsed
             ? "w-10 h-10 justify-center rounded-[10px] mx-auto"
             : "w-full px-3 py-2.5 rounded-[10px] gap-3"
         } ${colorClasses}`}
       >
+        {active && variant === "default" && !isCollapsed && (
+          <span className="absolute left-0 top-1/2 -translate-y-1/2 h-5 w-[3px] rounded-r bg-primary" />
+        )}
         <Icon className="h-5 w-5 shrink-0" strokeWidth={1.5} />
         <AnimatePresence>
           {!isCollapsed && (
