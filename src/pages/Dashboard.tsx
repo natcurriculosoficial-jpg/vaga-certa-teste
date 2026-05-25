@@ -34,7 +34,19 @@ interface SavedJob {
 
 export default function Dashboard({ user }: { user: Profile }) {
   const navigate = useNavigate();
+  const { logout } = useAuth();
+  const { plan } = usePlan();
   const { completedCount, total, percentage } = useChecklist();
+
+  const trialDaysRemaining = useMemo(() => {
+    if (!plan.trialEnd) return 0;
+    const diff = new Date(plan.trialEnd).getTime() - Date.now();
+    return Math.max(0, Math.ceil(diff / (1000 * 60 * 60 * 24)));
+  }, [plan.trialEnd]);
+
+  const isTrial = plan.status === "trialing";
+  const trialExpired = plan.slug === "free" && user.trial_used === true;
+
 
   const [resumeStatus, setResumeStatus] = useState({ hasExperience: false, hasBullets: false });
   const [savedJobsCount, setSavedJobsCount] = useState(0);
