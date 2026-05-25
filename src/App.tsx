@@ -19,6 +19,18 @@ import SettingsPage from "@/pages/Settings";
 import Pricing from "@/pages/Pricing";
 import Members from "@/pages/Members";
 import FeatureGate from "@/components/FeatureGate";
+import { useParams } from "react-router-dom";
+
+const ONBOARDING_COURSE_ID = "00000000-0000-0000-0000-000000000001";
+function GatedCourseViewer() {
+  const { id } = useParams<{ id: string }>();
+  if (id === ONBOARDING_COURSE_ID) return <CourseViewer />;
+  return (
+    <FeatureGate feature="all_courses" requiredPlan="essencial">
+      <CourseViewer />
+    </FeatureGate>
+  );
+}
 import CourseViewer from "@/pages/CourseViewer";
 import Admin from "@/pages/Admin";
 import Checklist from "@/pages/Checklist";
