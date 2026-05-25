@@ -90,7 +90,7 @@ export function useAuth() {
       password,
       options: {
         data: { name, phone },
-        emailRedirectTo: `${window.location.origin}/dashboard`,
+        emailRedirectTo: window.location.origin,
       },
     });
     if (error) throw error;
