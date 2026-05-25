@@ -202,6 +202,18 @@ export default function Pricing() {
             const isHighlight = p.slug === "candidato";
             const price = billing === "monthly" ? p.price_monthly : p.price_annual;
             const isCurrent = p.slug === userPlan.slug;
+            const userRank = PLAN_RANK[userPlan.slug] ?? 0;
+            const planRank = PLAN_RANK[p.slug] ?? 0;
+            const isUpgrade = planRank > userRank;
+            const isDowngrade = planRank < userRank && !isCurrent;
+            const isLoading = checkoutLoading === p.id;
+            const buttonLabel = isCurrent
+              ? "Seu plano atual"
+              : isUpgrade
+                ? "Fazer upgrade"
+                : isDowngrade
+                  ? "Plano inferior"
+                  : "Assinar";
 
             return (
               <motion.div
@@ -239,13 +251,21 @@ export default function Pricing() {
                 </div>
 
                 <Button
-                  className={`w-full ${isHighlight ? "gradient-primary text-white" : ""}`}
-                  variant={isHighlight ? "default" : "outline"}
-                  disabled={isCurrent}
+                  className={`w-full ${isHighlight && !isCurrent && !isDowngrade ? "gradient-primary text-white" : ""}`}
+                  variant={isCurrent || isDowngrade ? "outline" : isHighlight ? "default" : "outline"}
+                  disabled={isCurrent || isDowngrade || isLoading}
                   onClick={() => handleSubscribe(p)}
                 >
-                  {isCurrent ? "Plano atual" : "Assinar"}
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                      Redirecionando...
+                    </>
+                  ) : (
+                    buttonLabel
+                  )}
                 </Button>
+
 
                 <ul className="space-y-2.5 text-sm pt-3 border-t border-border/60">
                   {FEATURE_ROWS.map((row) => {
