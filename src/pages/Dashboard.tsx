@@ -114,8 +114,49 @@ export default function Dashboard({ user }: { user: Profile }) {
       variants={container}
       initial="hidden"
       animate="visible"
-      className="p-4 md:p-8 max-w-6xl mx-auto space-y-8"
+      className="p-4 md:p-8 max-w-6xl mx-auto space-y-8 relative"
     >
+      {/* Trial banner */}
+      {isTrial && (
+        <motion.div variants={item} className="rounded-2xl bg-gradient-to-r from-primary/15 via-secondary/15 to-primary/10 border border-primary/20 px-5 py-4 flex items-center gap-4">
+          <div className="w-10 h-10 rounded-xl bg-primary/20 flex items-center justify-center text-xl shrink-0">
+            🎟️
+          </div>
+          <div className="flex-1 min-w-0">
+            <p className="font-semibold text-foreground">Teste gratuito ativo</p>
+            <p className="text-xs text-muted-foreground">
+              {trialDaysRemaining > 0
+                ? `Faltam ${trialDaysRemaining} dia${trialDaysRemaining === 1 ? "" : "s"} do seu período de teste`
+                : "Seu período de teste termina hoje"}
+            </p>
+          </div>
+          <Button variant="outline" size="sm" className="border-primary/40 hover:bg-primary/10" onClick={() => navigate("/pricing")}>
+            Ver planos
+          </Button>
+        </motion.div>
+      )}
+
+      {/* Trial expired overlay */}
+      {trialExpired && (
+        <div className="fixed inset-0 z-50 bg-background/70 backdrop-blur-md flex items-center justify-center p-4">
+          <div className="max-w-md w-full rounded-2xl border border-border bg-card p-8 shadow-2xl text-center space-y-4">
+            <div className="w-14 h-14 rounded-2xl gradient-primary mx-auto flex items-center justify-center">
+              <Ticket className="h-6 w-6 text-white" />
+            </div>
+            <h2 className="text-xl font-bold text-foreground">Seu período de teste acabou 😔</h2>
+            <p className="text-sm text-muted-foreground">
+              Assine para continuar usando o Vaga Certa e acelerar sua recolocação.
+            </p>
+            <Button className="w-full gradient-primary text-white" onClick={() => navigate("/pricing")}>
+              Ver planos e assinar
+            </Button>
+            <button onClick={logout} className="text-xs text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5">
+              <LogOut className="h-3 w-3" /> Sair
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Hero banner */}
       <motion.div variants={item} className="relative overflow-hidden rounded-2xl vc-hero-gradient p-6 md:p-8">
         <svg className="absolute right-0 top-0 h-full w-1/3 opacity-20" viewBox="0 0 200 200" fill="none">
