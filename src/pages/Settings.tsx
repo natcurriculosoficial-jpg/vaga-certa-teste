@@ -1,12 +1,14 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
   User, Briefcase, Bell, Lock, Mail, Phone,
   Eye, EyeOff, Save, Sparkles, Loader2, Upload,
-  Shield, Check, X, Camera, Instagram
+  Shield, Check, X, Camera, Instagram, CreditCard, Zap,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { usePlan } from "@/hooks/usePlan";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -17,6 +19,10 @@ import {
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import {
+  Dialog, DialogContent, DialogDescription, DialogFooter,
+  DialogHeader, DialogTitle,
+} from "@/components/ui/dialog";
 
 interface NotificationPrefs {
   job_radar_new: boolean;
@@ -40,7 +46,10 @@ const PROF_AREAS = [
 
 export default function Settings() {
   const { user: profile, session, updateProfile } = useAuth();
-  const [tab, setTab] = useState<"personal" | "professional" | "notifications">("personal");
+  const { plan } = usePlan();
+  const navigate = useNavigate();
+  const [tab, setTab] = useState<"personal" | "professional" | "notifications" | "subscription">("personal");
+  const [cancelOpen, setCancelOpen] = useState(false);
 
   const [name, setName] = useState(profile?.name || "");
   const [phone, setPhone] = useState(profile?.phone || "");
@@ -216,6 +225,7 @@ export default function Settings() {
   const TABS = [
     { id: "personal" as const, label: "Perfil Pessoal", icon: User },
     { id: "professional" as const, label: "Perfil Profissional", icon: Briefcase },
+    { id: "subscription" as const, label: "Assinatura", icon: CreditCard },
     { id: "notifications" as const, label: "Notificações", icon: Bell },
   ];
 
