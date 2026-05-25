@@ -168,7 +168,16 @@ export default function Community() {
               ))}
             </div>
 
-            <CreatePost topics={topics} onCreated={refetch} />
+            {canWrite ? (
+              <CreatePost topics={topics} onCreated={refetch} />
+            ) : (
+              <div className="vc-card flex items-center gap-3 border border-dashed border-border bg-muted/30">
+                <Lock className="h-4 w-4 text-muted-foreground shrink-0" />
+                <p className="text-xs text-muted-foreground flex-1">
+                  Criar posts disponível no plano <span className="font-semibold text-foreground">Profissional</span>
+                </p>
+              </div>
+            )}
 
             {/* Search */}
             <div className="relative">
