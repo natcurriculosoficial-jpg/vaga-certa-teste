@@ -20,6 +20,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import CreditsIndicator from "./CreditsIndicator";
 
 const NAV_MAIN = [
   { label: "Início", icon: LayoutDashboard, path: "/dashboard" },
