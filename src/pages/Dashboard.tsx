@@ -1,13 +1,15 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
   FileText, Linkedin, Radar, Mic, ArrowRight,
-  TrendingUp, Sparkles, Target, CheckSquare, Play,
+  TrendingUp, Sparkles, Target, CheckSquare, Play, Ticket, LogOut,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import type { Profile } from "@/hooks/useAuth";
+import { useAuth } from "@/hooks/useAuth";
 import { useChecklist } from "@/hooks/useChecklist";
+import { usePlan } from "@/hooks/usePlan";
 import { supabase } from "@/integrations/supabase/client";
 import FabMenu from "@/components/FabMenu";
 
