@@ -10,6 +10,8 @@ import { useCommunityPosts, FeedFilter } from "@/hooks/useCommunityPosts";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import CreatePost from "@/components/community/CreatePost";
+import { usePlan } from "@/hooks/usePlan";
+import { Lock } from "lucide-react";
 import PostCard from "@/components/community/PostCard";
 import UserProfileSheet from "@/components/community/UserProfileSheet";
 import {
@@ -31,6 +33,8 @@ const SIDEBAR_FILTERS: { id: FeedFilter; label: string; icon: React.ElementType 
 
 export default function Community() {
   const { posts, loading, filter, setFilter, topicFilter, setTopicFilter, hasMore, loadMore, toggleLike, toggleFavorite, refetch } = useCommunityPosts();
+  const { plan } = usePlan();
+  const canWrite = plan.hasCommunityWrite;
   const [topics, setTopics] = useState<Topic[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [profileUserId, setProfileUserId] = useState<string | null>(null);
@@ -164,7 +168,16 @@ export default function Community() {
               ))}
             </div>
 
-            <CreatePost topics={topics} onCreated={refetch} />
+            {canWrite ? (
+              <CreatePost topics={topics} onCreated={refetch} />
+            ) : (
+              <div className="vc-card flex items-center gap-3 border border-dashed border-border bg-muted/30">
+                <Lock className="h-4 w-4 text-muted-foreground shrink-0" />
+                <p className="text-xs text-muted-foreground flex-1">
+                  Criar posts disponível no plano <span className="font-semibold text-foreground">Profissional</span>
+                </p>
+              </div>
+            )}
 
             {/* Search */}
             <div className="relative">

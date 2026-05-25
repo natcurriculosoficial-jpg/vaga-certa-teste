@@ -14,6 +14,39 @@ export type Database = {
   }
   public: {
     Tables: {
+      ai_credits: {
+        Row: {
+          bonus_credits: number
+          id: string
+          period_end: string | null
+          period_start: string | null
+          plan_credits_remaining: number
+          trial_credits_remaining: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          bonus_credits?: number
+          id?: string
+          period_end?: string | null
+          period_start?: string | null
+          plan_credits_remaining?: number
+          trial_credits_remaining?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          bonus_credits?: number
+          id?: string
+          period_end?: string | null
+          period_start?: string | null
+          plan_credits_remaining?: number
+          trial_credits_remaining?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       certificates: {
         Row: {
           created_at: string
@@ -394,6 +427,33 @@ export type Database = {
         }
         Relationships: []
       }
+      feature_usage: {
+        Row: {
+          count: number
+          feature: string
+          id: string
+          period_month: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          count?: number
+          feature: string
+          id?: string
+          period_month: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          count?: number
+          feature?: string
+          id?: string
+          period_month?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       languages: {
         Row: {
           created_at: string
@@ -491,12 +551,121 @@ export type Database = {
           },
         ]
       }
+      payment_history: {
+        Row: {
+          amount: number
+          created_at: string
+          currency: string
+          description: string | null
+          id: string
+          provider: string | null
+          provider_payment_id: string | null
+          status: string
+          user_id: string
+        }
+        Insert: {
+          amount: number
+          created_at?: string
+          currency?: string
+          description?: string | null
+          id?: string
+          provider?: string | null
+          provider_payment_id?: string | null
+          status: string
+          user_id: string
+        }
+        Update: {
+          amount?: number
+          created_at?: string
+          currency?: string
+          description?: string | null
+          id?: string
+          provider?: string | null
+          provider_payment_id?: string | null
+          status?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      plans: {
+        Row: {
+          ai_credits_monthly: number | null
+          created_at: string
+          has_advanced_filters: boolean
+          has_all_courses: boolean
+          has_community_read: boolean
+          has_community_write: boolean
+          has_docx_export: boolean
+          has_interview: boolean
+          has_job_tracker: boolean
+          has_priority_support: boolean
+          id: string
+          interview_monthly_limit: number | null
+          is_active: boolean
+          job_tracker_limit: number | null
+          name: string
+          price_annual: number
+          price_monthly: number
+          slug: string
+          sort_order: number
+          tagline: string | null
+          updated_at: string
+        }
+        Insert: {
+          ai_credits_monthly?: number | null
+          created_at?: string
+          has_advanced_filters?: boolean
+          has_all_courses?: boolean
+          has_community_read?: boolean
+          has_community_write?: boolean
+          has_docx_export?: boolean
+          has_interview?: boolean
+          has_job_tracker?: boolean
+          has_priority_support?: boolean
+          id?: string
+          interview_monthly_limit?: number | null
+          is_active?: boolean
+          job_tracker_limit?: number | null
+          name: string
+          price_annual?: number
+          price_monthly?: number
+          slug: string
+          sort_order?: number
+          tagline?: string | null
+          updated_at?: string
+        }
+        Update: {
+          ai_credits_monthly?: number | null
+          created_at?: string
+          has_advanced_filters?: boolean
+          has_all_courses?: boolean
+          has_community_read?: boolean
+          has_community_write?: boolean
+          has_docx_export?: boolean
+          has_interview?: boolean
+          has_job_tracker?: boolean
+          has_priority_support?: boolean
+          id?: string
+          interview_monthly_limit?: number | null
+          is_active?: boolean
+          job_tracker_limit?: number | null
+          name?: string
+          price_annual?: number
+          price_monthly?: number
+          slug?: string
+          sort_order?: number
+          tagline?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           area: string | null
           avatar_url: string | null
           city: string | null
           created_at: string
+          current_plan: string
           email: string
           id: string
           instagram_url: string | null
@@ -509,6 +678,7 @@ export type Database = {
           portfolio_url: string | null
           situation: string | null
           target_role: string | null
+          trial_used: boolean
           updated_at: string
           user_id: string
         }
@@ -517,6 +687,7 @@ export type Database = {
           avatar_url?: string | null
           city?: string | null
           created_at?: string
+          current_plan?: string
           email?: string
           id?: string
           instagram_url?: string | null
@@ -529,6 +700,7 @@ export type Database = {
           portfolio_url?: string | null
           situation?: string | null
           target_role?: string | null
+          trial_used?: boolean
           updated_at?: string
           user_id: string
         }
@@ -537,6 +709,7 @@ export type Database = {
           avatar_url?: string | null
           city?: string | null
           created_at?: string
+          current_plan?: string
           email?: string
           id?: string
           instagram_url?: string | null
@@ -549,6 +722,7 @@ export type Database = {
           portfolio_url?: string | null
           situation?: string | null
           target_role?: string | null
+          trial_used?: boolean
           updated_at?: string
           user_id?: string
         }
@@ -626,6 +800,56 @@ export type Database = {
         }
         Relationships: []
       }
+      subscriptions: {
+        Row: {
+          billing_cycle: string | null
+          created_at: string
+          current_period_end: string | null
+          current_period_start: string | null
+          id: string
+          plan_id: string
+          status: string
+          stripe_subscription_id: string | null
+          trial_end: string | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          billing_cycle?: string | null
+          created_at?: string
+          current_period_end?: string | null
+          current_period_start?: string | null
+          id?: string
+          plan_id: string
+          status?: string
+          stripe_subscription_id?: string | null
+          trial_end?: string | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          billing_cycle?: string | null
+          created_at?: string
+          current_period_end?: string | null
+          current_period_start?: string | null
+          id?: string
+          plan_id?: string
+          status?: string
+          stripe_subscription_id?: string | null
+          trial_end?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "subscriptions_plan_id_fkey"
+            columns: ["plan_id"]
+            isOneToOne: false
+            referencedRelation: "plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       usage_logs: {
         Row: {
           action: string
@@ -673,12 +897,20 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      check_feature_access: {
+        Args: { p_feature: string; p_user_id: string }
+        Returns: Json
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
           _user_id: string
         }
         Returns: boolean
+      }
+      use_ai_credit: {
+        Args: { p_amount?: number; p_user_id: string }
+        Returns: Json
       }
     }
     Enums: {

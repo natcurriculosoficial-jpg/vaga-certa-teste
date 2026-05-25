@@ -18,6 +18,19 @@ import Profile from "@/pages/Profile";
 import SettingsPage from "@/pages/Settings";
 import Pricing from "@/pages/Pricing";
 import Members from "@/pages/Members";
+import FeatureGate from "@/components/FeatureGate";
+import { useParams } from "react-router-dom";
+
+const ONBOARDING_COURSE_ID = "00000000-0000-0000-0000-000000000001";
+function GatedCourseViewer() {
+  const { id } = useParams<{ id: string }>();
+  if (id === ONBOARDING_COURSE_ID) return <CourseViewer />;
+  return (
+    <FeatureGate feature="all_courses" requiredPlan="essencial">
+      <CourseViewer />
+    </FeatureGate>
+  );
+}
 import CourseViewer from "@/pages/CourseViewer";
 import Admin from "@/pages/Admin";
 import Checklist from "@/pages/Checklist";
@@ -65,15 +78,15 @@ function AppRoutes() {
         <Route path="/dashboard" element={<Dashboard user={user} />} />
         <Route path="/resume" element={<Resume user={user} />} />
         <Route path="/linkedin" element={<LinkedInPage user={user} />} />
-        <Route path="/job-radar" element={<JobRadar />} />
-        <Route path="/interview" element={<Interview user={user} />} />
+        <Route path="/job-radar" element={<FeatureGate feature="job_tracker" requiredPlan="candidato"><JobRadar /></FeatureGate>} />
+        <Route path="/interview" element={<FeatureGate feature="interview" requiredPlan="candidato"><Interview user={user} /></FeatureGate>} />
         <Route path="/checklist" element={<Checklist />} />
-        <Route path="/community" element={<Community />} />
+        <Route path="/community" element={<FeatureGate feature="community_read" requiredPlan="candidato"><Community /></FeatureGate>} />
         <Route path="/profile" element={<Profile user={user} onUpdate={updateProfile} />} />
         <Route path="/settings" element={<SettingsPage />} />
         <Route path="/pricing" element={<Pricing />} />
-        <Route path="/members" element={<Members />} />
-        <Route path="/members/course/:id" element={<CourseViewer />} />
+        <Route path="/members" element={<FeatureGate feature="all_courses" requiredPlan="essencial"><Members /></FeatureGate>} />
+        <Route path="/members/course/:id" element={<GatedCourseViewer />} />
         <Route path="/admin" element={<Admin />} />
         <Route path="/" element={<Navigate to="/dashboard" replace />} />
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
