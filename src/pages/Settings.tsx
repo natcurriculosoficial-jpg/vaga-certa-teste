@@ -1,12 +1,14 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
   User, Briefcase, Bell, Lock, Mail, Phone,
   Eye, EyeOff, Save, Sparkles, Loader2, Upload,
-  Shield, Check, X, Camera, Instagram
+  Shield, Check, X, Camera, Instagram, CreditCard, Zap,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { usePlan } from "@/hooks/usePlan";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -17,6 +19,10 @@ import {
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
+import {
+  Dialog, DialogContent, DialogDescription, DialogFooter,
+  DialogHeader, DialogTitle,
+} from "@/components/ui/dialog";
 
 interface NotificationPrefs {
   job_radar_new: boolean;
@@ -40,7 +46,10 @@ const PROF_AREAS = [
 
 export default function Settings() {
   const { user: profile, session, updateProfile } = useAuth();
-  const [tab, setTab] = useState<"personal" | "professional" | "notifications">("personal");
+  const { plan } = usePlan();
+  const navigate = useNavigate();
+  const [tab, setTab] = useState<"personal" | "professional" | "notifications" | "subscription">("personal");
+  const [cancelOpen, setCancelOpen] = useState(false);
 
   const [name, setName] = useState(profile?.name || "");
   const [phone, setPhone] = useState(profile?.phone || "");
@@ -216,6 +225,7 @@ export default function Settings() {
   const TABS = [
     { id: "personal" as const, label: "Perfil Pessoal", icon: User },
     { id: "professional" as const, label: "Perfil Profissional", icon: Briefcase },
+    { id: "subscription" as const, label: "Assinatura", icon: CreditCard },
     { id: "notifications" as const, label: "Notificações", icon: Bell },
   ];
 
@@ -485,7 +495,113 @@ export default function Settings() {
         </motion.div>
       )}
 
+      {/* SUBSCRIPTION TAB */}
+      {tab === "subscription" && (
+        <motion.div initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} className="space-y-4">
+          <div className="vc-card space-y-5">
+            <div className="flex items-center gap-2">
+              <CreditCard className="h-4 w-4 text-primary" />
+              <h3 className="font-semibold text-foreground text-sm">Minha Assinatura</h3>
+            </div>
+
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="rounded-xl border border-border bg-muted/30 p-4">
+                <p className="text-xs text-muted-foreground">Plano atual</p>
+                <p className="text-lg font-bold text-foreground mt-1">{plan.name}</p>
+              </div>
+              <div className="rounded-xl border border-border bg-muted/30 p-4">
+                <p className="text-xs text-muted-foreground">Status</p>
+                <p className="text-lg font-bold text-foreground mt-1 flex items-center gap-2">
+                  <span className={`h-2 w-2 rounded-full ${
+                    plan.status === "active" ? "bg-green-500" :
+                    plan.status === "trialing" ? "bg-blue-500" :
+                    plan.status === "canceled" ? "bg-amber-500" : "bg-muted-foreground"
+                  }`} />
+                  {plan.status === "active" ? "Ativo" :
+                   plan.status === "trialing" ? "Período de teste" :
+                   plan.status === "canceled" ? "Cancelado" : "Inativo"}
+                </p>
+              </div>
+              <div className="rounded-xl border border-border bg-muted/30 p-4">
+                <p className="text-xs text-muted-foreground">Ciclo</p>
+                <p className="text-lg font-bold text-foreground mt-1">
+                  {plan.billingCycle === "yearly" ? "Anual" :
+                   plan.billingCycle === "monthly" ? "Mensal" : "—"}
+                </p>
+              </div>
+              <div className="rounded-xl border border-border bg-muted/30 p-4">
+                <p className="text-xs text-muted-foreground">
+                  {plan.status === "trialing" ? "Fim do trial" : "Próxima cobrança"}
+                </p>
+                <p className="text-lg font-bold text-foreground mt-1">
+                  {(() => {
+                    const date = plan.status === "trialing" ? plan.trialEnd : plan.periodEnd;
+                    return date ? new Date(date).toLocaleDateString("pt-BR") : "—";
+                  })()}
+                </p>
+              </div>
+            </div>
+
+            <div className="rounded-xl border border-primary/20 bg-primary/5 p-4 flex items-center gap-3">
+              <Zap className="h-5 w-5 text-primary shrink-0" />
+              <div className="flex-1">
+                <p className="text-sm font-semibold text-foreground">Créditos de IA</p>
+                <p className="text-xs text-muted-foreground">
+                  {plan.isUnlimited
+                    ? "Ilimitados neste plano"
+                    : `${plan.aiCreditsRemaining} de ${plan.aiCreditsTotal} restantes este mês`}
+                </p>
+              </div>
+            </div>
+
+            <div className="flex flex-col sm:flex-row gap-2">
+              <Button
+                onClick={() => navigate("/pricing")}
+                className="gradient-primary text-white"
+              >
+                Trocar plano
+              </Button>
+              {plan.slug !== "free" && plan.status !== "canceled" && (
+                <Button variant="outline" onClick={() => setCancelOpen(true)}>
+                  Cancelar assinatura
+                </Button>
+              )}
+            </div>
+          </div>
+
+          <Dialog open={cancelOpen} onOpenChange={setCancelOpen}>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>Cancelar assinatura?</DialogTitle>
+                <DialogDescription>
+                  Você perderá acesso aos recursos do seu plano ao final do período pago.
+                  Para cancelar, entre em contato com nossa equipe.
+                </DialogDescription>
+              </DialogHeader>
+              <DialogFooter>
+                <Button variant="outline" onClick={() => setCancelOpen(false)}>
+                  Voltar
+                </Button>
+                <Button
+                  variant="destructive"
+                  onClick={() => {
+                    setCancelOpen(false);
+                    toast({
+                      title: "Entre em contato",
+                      description: "Envie um e-mail para contato@vagacerta.com.br para cancelar sua assinatura.",
+                    });
+                  }}
+                >
+                  Confirmar cancelamento
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </motion.div>
+      )}
+
       {/* NOTIFICATIONS TAB */}
+
       {tab === "notifications" && (
         <motion.div initial={{ opacity: 0, x: -8 }} animate={{ opacity: 1, x: 0 }} className="space-y-4">
           <div className="vc-card space-y-5">

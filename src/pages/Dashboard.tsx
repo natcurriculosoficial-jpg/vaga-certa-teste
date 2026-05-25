@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { toast } from "@/hooks/use-toast";
 import { motion } from "framer-motion";
 import {
   FileText, Linkedin, Radar, Mic, ArrowRight,
@@ -35,8 +36,24 @@ interface SavedJob {
 export default function Dashboard({ user }: { user: Profile }) {
   const navigate = useNavigate();
   const { logout } = useAuth();
-  const { plan } = usePlan();
+  const { plan, refreshPlan } = usePlan();
   const { completedCount, total, percentage } = useChecklist();
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  useEffect(() => {
+    const checkout = searchParams.get("checkout");
+    if (!checkout) return;
+    if (checkout === "success") {
+      toast({ title: "🎉 Assinatura ativada com sucesso!", description: "Bem-vindo ao seu novo plano." });
+      // Aguarda webhook processar antes de refetch
+      setTimeout(() => refreshPlan(), 1500);
+    } else if (checkout === "canceled") {
+      toast({ title: "Checkout cancelado", description: "Você pode tentar novamente quando quiser." });
+    }
+    const next = new URLSearchParams(searchParams);
+    next.delete("checkout");
+    setSearchParams(next, { replace: true });
+  }, [searchParams, setSearchParams, refreshPlan]);
 
   const trialDaysRemaining = useMemo(() => {
     if (!plan.trialEnd) return 0;

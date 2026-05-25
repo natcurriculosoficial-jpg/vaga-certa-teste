@@ -28,7 +28,16 @@ interface Plan {
   has_all_courses: boolean;
   has_priority_support: boolean;
   sort_order: number;
+  stripe_price_monthly: string | null;
+  stripe_price_yearly: string | null;
 }
+
+const PLAN_RANK: Record<string, number> = {
+  free: 0,
+  essencial: 1,
+  candidato: 2,
+  profissional: 3,
+};
 
 type Billing = "monthly" | "annual";
 
@@ -84,6 +93,7 @@ export default function Pricing() {
   const [billing, setBilling] = useState<Billing>("monthly");
   const [plans, setPlans] = useState<Plan[]>([]);
   const [loading, setLoading] = useState(true);
+  const [checkoutLoading, setCheckoutLoading] = useState<string | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -105,12 +115,48 @@ export default function Pricing() {
     return Math.round(Math.max(...ratios, 0) * 100);
   }, [plans]);
 
-  const handleSubscribe = (p: Plan) => {
-    if (p.slug === userPlan.slug) {
-      navigate("/dashboard");
+  const handleSubscribe = async (p: Plan) => {
+    if (p.slug === userPlan.slug) return;
+
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) {
+      navigate("/login?redirect=/pricing");
       return;
     }
-    toast({ title: "Em breve!", description: "A contratação de planos será liberada em breve." });
+
+    const priceId = billing === "annual" ? p.stripe_price_yearly : p.stripe_price_monthly;
+    if (!priceId) {
+      toast({
+        title: "Plano indisponível",
+        description: "Este plano não está configurado para cobrança no momento.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setCheckoutLoading(p.id);
+    try {
+      const { data, error } = await supabase.functions.invoke("create-checkout", {
+        body: {
+          priceId,
+          planSlug: p.slug,
+          billingCycle: billing === "annual" ? "yearly" : "monthly",
+        },
+      });
+      if (error) throw error;
+      if (data?.url) {
+        window.location.href = data.url;
+        return;
+      }
+      throw new Error("Resposta inválida do checkout");
+    } catch (e: any) {
+      toast({
+        title: "Não foi possível iniciar o checkout",
+        description: e.message || "Tente novamente em alguns instantes.",
+        variant: "destructive",
+      });
+      setCheckoutLoading(null);
+    }
   };
 
   return (
@@ -156,6 +202,18 @@ export default function Pricing() {
             const isHighlight = p.slug === "candidato";
             const price = billing === "monthly" ? p.price_monthly : p.price_annual;
             const isCurrent = p.slug === userPlan.slug;
+            const userRank = PLAN_RANK[userPlan.slug] ?? 0;
+            const planRank = PLAN_RANK[p.slug] ?? 0;
+            const isUpgrade = planRank > userRank;
+            const isDowngrade = planRank < userRank && !isCurrent;
+            const isLoading = checkoutLoading === p.id;
+            const buttonLabel = isCurrent
+              ? "Seu plano atual"
+              : isUpgrade
+                ? "Fazer upgrade"
+                : isDowngrade
+                  ? "Plano inferior"
+                  : "Assinar";
 
             return (
               <motion.div
@@ -193,13 +251,21 @@ export default function Pricing() {
                 </div>
 
                 <Button
-                  className={`w-full ${isHighlight ? "gradient-primary text-white" : ""}`}
-                  variant={isHighlight ? "default" : "outline"}
-                  disabled={isCurrent}
+                  className={`w-full ${isHighlight && !isCurrent && !isDowngrade ? "gradient-primary text-white" : ""}`}
+                  variant={isCurrent || isDowngrade ? "outline" : isHighlight ? "default" : "outline"}
+                  disabled={isCurrent || isDowngrade || isLoading}
                   onClick={() => handleSubscribe(p)}
                 >
-                  {isCurrent ? "Plano atual" : "Assinar"}
+                  {isLoading ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                      Redirecionando...
+                    </>
+                  ) : (
+                    buttonLabel
+                  )}
                 </Button>
+
 
                 <ul className="space-y-2.5 text-sm pt-3 border-t border-border/60">
                   {FEATURE_ROWS.map((row) => {
