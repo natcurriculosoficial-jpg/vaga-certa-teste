@@ -98,6 +98,8 @@ export default function Pricing() {
   const [plans, setPlans] = useState<Plan[]>([]);
   const [loading, setLoading] = useState(true);
   const [checkoutLoading, setCheckoutLoading] = useState<string | null>(null);
+  const [methodModalPlan, setMethodModalPlan] = useState<Plan | null>(null);
+  const [pixPlan, setPixPlan] = useState<Plan | null>(null);
 
   useEffect(() => {
     (async () => {
