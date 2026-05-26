@@ -339,6 +339,27 @@ export default function Pricing() {
       <p className="text-center text-xs text-muted-foreground">
         Você pode alterar ou cancelar seu plano a qualquer momento.
       </p>
+
+      <PaymentMethodModal
+        open={!!methodModalPlan}
+        onOpenChange={(o) => !o && setMethodModalPlan(null)}
+        onSelect={handleMethodSelect}
+        pixAvailable={
+          !!(methodModalPlan &&
+            ((billing === "annual"
+              ? methodModalPlan.pix_price_yearly_cents
+              : methodModalPlan.pix_price_monthly_cents) ?? 0) > 0)
+        }
+      />
+
+      {pixPlan && (
+        <PixModal
+          open={!!pixPlan}
+          onOpenChange={(o) => !o && setPixPlan(null)}
+          planSlug={pixPlan.slug}
+          billingCycle={billing === "annual" ? "yearly" : "monthly"}
+        />
+      )}
     </div>
   );
 }
