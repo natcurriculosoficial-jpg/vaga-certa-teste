@@ -1,13 +1,15 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Check, X, Sparkles, Loader2 } from "lucide-react";
+import { Check, X, Sparkles, Loader2, Smartphone } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "@/hooks/use-toast";
 import { usePlan } from "@/hooks/usePlan";
+import { PaymentMethodModal } from "@/components/pricing/PaymentMethodModal";
+import { PixModal } from "@/components/pricing/PixModal";
 
 interface Plan {
   id: string;
@@ -30,6 +32,8 @@ interface Plan {
   sort_order: number;
   stripe_price_monthly: string | null;
   stripe_price_yearly: string | null;
+  pix_price_monthly_cents: number | null;
+  pix_price_yearly_cents: number | null;
 }
 
 const PLAN_RANK: Record<string, number> = {
@@ -94,6 +98,8 @@ export default function Pricing() {
   const [plans, setPlans] = useState<Plan[]>([]);
   const [loading, setLoading] = useState(true);
   const [checkoutLoading, setCheckoutLoading] = useState<string | null>(null);
+  const [methodModalPlan, setMethodModalPlan] = useState<Plan | null>(null);
+  const [pixPlan, setPixPlan] = useState<Plan | null>(null);
 
   useEffect(() => {
     (async () => {
@@ -124,8 +130,19 @@ export default function Pricing() {
       return;
     }
 
-    const priceId = billing === "annual" ? p.stripe_price_yearly : p.stripe_price_monthly;
-    if (!priceId) {
+    const pixCents = billing === "annual" ? p.pix_price_yearly_cents : p.pix_price_monthly_cents;
+    const stripePrice = billing === "annual" ? p.stripe_price_yearly : p.stripe_price_monthly;
+
+    // If only one method is available, skip the chooser
+    if (!pixCents && stripePrice) {
+      await startCardCheckout(p);
+      return;
+    }
+    if (pixCents && !stripePrice) {
+      setPixPlan(p);
+      return;
+    }
+    if (!pixCents && !stripePrice) {
       toast({
         title: "Plano indisponível",
         description: "Este plano não está configurado para cobrança no momento.",
@@ -134,6 +151,19 @@ export default function Pricing() {
       return;
     }
 
+    setMethodModalPlan(p);
+  };
+
+  const startCardCheckout = async (p: Plan) => {
+    const priceId = billing === "annual" ? p.stripe_price_yearly : p.stripe_price_monthly;
+    if (!priceId) {
+      toast({
+        title: "Cartão indisponível",
+        description: "Pagamento com cartão não está configurado para este plano.",
+        variant: "destructive",
+      });
+      return;
+    }
     setCheckoutLoading(p.id);
     try {
       const { data, error } = await supabase.functions.invoke("create-checkout", {
@@ -157,6 +187,14 @@ export default function Pricing() {
       });
       setCheckoutLoading(null);
     }
+  };
+
+  const handleMethodSelect = (method: "card" | "pix") => {
+    const p = methodModalPlan;
+    setMethodModalPlan(null);
+    if (!p) return;
+    if (method === "card") startCardCheckout(p);
+    else setPixPlan(p);
   };
 
   return (
@@ -238,7 +276,7 @@ export default function Pricing() {
                   {p.tagline && <p className="text-xs text-muted-foreground mt-1">{p.tagline}</p>}
                 </div>
 
-                <div className="min-h-[72px]">
+                <div className="min-h-[88px]">
                   <div className="flex items-baseline gap-1">
                     <span className="text-3xl font-bold text-foreground">{brl(price)}</span>
                     <span className="text-sm text-muted-foreground">/mês</span>
@@ -248,6 +286,11 @@ export default function Pricing() {
                       ? `cobrado ${brl(price * 12)}/ano`
                       : "cobrado mensalmente"}
                   </div>
+                  {((billing === "annual" ? p.pix_price_yearly_cents : p.pix_price_monthly_cents) ?? 0) > 0 && (
+                    <Badge variant="secondary" className="mt-2 gap-1 bg-success/10 text-success border-success/20 hover:bg-success/10">
+                      <Smartphone className="h-3 w-3" /> PIX disponível
+                    </Badge>
+                  )}
                 </div>
 
                 <Button
@@ -296,6 +339,27 @@ export default function Pricing() {
       <p className="text-center text-xs text-muted-foreground">
         Você pode alterar ou cancelar seu plano a qualquer momento.
       </p>
+
+      <PaymentMethodModal
+        open={!!methodModalPlan}
+        onOpenChange={(o) => !o && setMethodModalPlan(null)}
+        onSelect={handleMethodSelect}
+        pixAvailable={
+          !!(methodModalPlan &&
+            ((billing === "annual"
+              ? methodModalPlan.pix_price_yearly_cents
+              : methodModalPlan.pix_price_monthly_cents) ?? 0) > 0)
+        }
+      />
+
+      {pixPlan && (
+        <PixModal
+          open={!!pixPlan}
+          onOpenChange={(o) => !o && setPixPlan(null)}
+          planSlug={pixPlan.slug}
+          billingCycle={billing === "annual" ? "yearly" : "monthly"}
+        />
+      )}
     </div>
   );
 }
