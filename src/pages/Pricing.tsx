@@ -130,8 +130,19 @@ export default function Pricing() {
       return;
     }
 
-    const priceId = billing === "annual" ? p.stripe_price_yearly : p.stripe_price_monthly;
-    if (!priceId) {
+    const pixCents = billing === "annual" ? p.pix_price_yearly_cents : p.pix_price_monthly_cents;
+    const stripePrice = billing === "annual" ? p.stripe_price_yearly : p.stripe_price_monthly;
+
+    // If only one method is available, skip the chooser
+    if (!pixCents && stripePrice) {
+      await startCardCheckout(p);
+      return;
+    }
+    if (pixCents && !stripePrice) {
+      setPixPlan(p);
+      return;
+    }
+    if (!pixCents && !stripePrice) {
       toast({
         title: "Plano indisponível",
         description: "Este plano não está configurado para cobrança no momento.",
@@ -140,6 +151,19 @@ export default function Pricing() {
       return;
     }
 
+    setMethodModalPlan(p);
+  };
+
+  const startCardCheckout = async (p: Plan) => {
+    const priceId = billing === "annual" ? p.stripe_price_yearly : p.stripe_price_monthly;
+    if (!priceId) {
+      toast({
+        title: "Cartão indisponível",
+        description: "Pagamento com cartão não está configurado para este plano.",
+        variant: "destructive",
+      });
+      return;
+    }
     setCheckoutLoading(p.id);
     try {
       const { data, error } = await supabase.functions.invoke("create-checkout", {
@@ -163,6 +187,14 @@ export default function Pricing() {
       });
       setCheckoutLoading(null);
     }
+  };
+
+  const handleMethodSelect = (method: "card" | "pix") => {
+    const p = methodModalPlan;
+    setMethodModalPlan(null);
+    if (!p) return;
+    if (method === "card") startCardCheckout(p);
+    else setPixPlan(p);
   };
 
   return (
