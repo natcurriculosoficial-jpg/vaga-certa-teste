@@ -276,7 +276,7 @@ export default function Pricing() {
                   {p.tagline && <p className="text-xs text-muted-foreground mt-1">{p.tagline}</p>}
                 </div>
 
-                <div className="min-h-[72px]">
+                <div className="min-h-[88px]">
                   <div className="flex items-baseline gap-1">
                     <span className="text-3xl font-bold text-foreground">{brl(price)}</span>
                     <span className="text-sm text-muted-foreground">/mês</span>
@@ -286,6 +286,11 @@ export default function Pricing() {
                       ? `cobrado ${brl(price * 12)}/ano`
                       : "cobrado mensalmente"}
                   </div>
+                  {((billing === "annual" ? p.pix_price_yearly_cents : p.pix_price_monthly_cents) ?? 0) > 0 && (
+                    <Badge variant="secondary" className="mt-2 gap-1 bg-success/10 text-success border-success/20 hover:bg-success/10">
+                      <Smartphone className="h-3 w-3" /> PIX disponível
+                    </Badge>
+                  )}
                 </div>
 
                 <Button
