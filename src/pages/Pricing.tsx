@@ -32,6 +32,8 @@ interface Plan {
   sort_order: number;
   stripe_price_monthly: string | null;
   stripe_price_yearly: string | null;
+  pix_price_monthly_cents: number | null;
+  pix_price_yearly_cents: number | null;
 }
 
 const PLAN_RANK: Record<string, number> = {
