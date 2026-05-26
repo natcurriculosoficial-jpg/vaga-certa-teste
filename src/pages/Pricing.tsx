@@ -1,13 +1,15 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
-import { Check, X, Sparkles, Loader2 } from "lucide-react";
+import { Check, X, Sparkles, Loader2, Smartphone } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "@/hooks/use-toast";
 import { usePlan } from "@/hooks/usePlan";
+import { PaymentMethodModal } from "@/components/pricing/PaymentMethodModal";
+import { PixModal } from "@/components/pricing/PixModal";
 
 interface Plan {
   id: string;
