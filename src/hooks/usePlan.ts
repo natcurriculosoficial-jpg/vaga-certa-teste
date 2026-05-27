@@ -63,11 +63,13 @@ export function usePlan() {
     try {
       const userId = session.user.id;
 
+      const nowIso = new Date().toISOString();
       const { data: sub } = await (supabase as any)
         .from("subscriptions")
         .select("*, plans(*)")
         .eq("user_id", userId)
         .in("status", ["active", "trialing", "canceled"])
+        .or(`current_period_end.is.null,current_period_end.gte.${nowIso}`)
         .order("created_at", { ascending: false })
         .limit(1)
         .maybeSingle();
