@@ -54,7 +54,7 @@ function PostLoginRedirect() {
 }
 
 function AppRoutes() {
-  const { user, loading, login, signup, loginWithGoogle, updateProfile, logout } = useAuth();
+  const { user, loading, signup, updateProfile, logout } = useAuth();
 
   if (loading) {
     return (
