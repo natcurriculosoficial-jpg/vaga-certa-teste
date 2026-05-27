@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate, Link, useSearchParams } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Mail, Lock, Eye, EyeOff, Loader2, Sparkles } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
@@ -10,7 +10,6 @@ import { toast } from "@/hooks/use-toast";
 
 export default function Login() {
   const { login } = useAuth();
-  const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const redirect = searchParams.get("redirect");
 

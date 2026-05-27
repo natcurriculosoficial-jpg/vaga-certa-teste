@@ -21,6 +21,10 @@ import Pricing from "@/pages/Pricing";
 import Members from "@/pages/Members";
 import FeatureGate from "@/components/FeatureGate";
 import { useParams } from "react-router-dom";
+import CourseViewer from "@/pages/CourseViewer";
+import Admin from "@/pages/Admin";
+import Checklist from "@/pages/Checklist";
+import Community from "@/pages/Community";
 
 const ONBOARDING_COURSE_ID = "00000000-0000-0000-0000-000000000001";
 function GatedCourseViewer() {
@@ -32,11 +36,6 @@ function GatedCourseViewer() {
     </FeatureGate>
   );
 }
-import CourseViewer from "@/pages/CourseViewer";
-import Admin from "@/pages/Admin";
-import Checklist from "@/pages/Checklist";
-import Community from "@/pages/Community";
-import NotFound from "@/pages/NotFound";
 
 const queryClient = new QueryClient();
 
@@ -55,7 +54,7 @@ function PostLoginRedirect() {
 }
 
 function AppRoutes() {
-  const { user, loading, login, signup, loginWithGoogle, updateProfile, logout } = useAuth();
+  const { user, loading, login, signup, updateProfile, logout } = useAuth();
 
   if (loading) {
     return (

@@ -100,8 +100,10 @@ export function PixModal({ open, onOpenChange, planSlug, billingCycle }: Props) 
       if (!user) return;
       const { data } = await (supabase as any)
         .from("subscriptions")
-        .select("status, updated_at")
+        .select("status, plans!inner(slug)")
         .eq("user_id", user.id)
+        .eq("status", "active")
+        .eq("plans.slug", planSlug)
         .order("updated_at", { ascending: false })
         .limit(1)
         .maybeSingle();
