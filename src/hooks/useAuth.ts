@@ -36,7 +36,7 @@ export function useAuth() {
     const { data, error } = await supabase
       .from("profiles")
       .select("*")
-      .eq("user_id", userId)
+      .eq("id", userId)
       .single();
     if (error) {
       console.error("Error fetching profile:", error);
