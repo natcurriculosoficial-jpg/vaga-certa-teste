@@ -40,8 +40,8 @@ export default function UserProfileSheet({
     (async () => {
       const { data } = await supabase
         .from("profiles")
-        .select("user_id, name, avatar_url, target_role, level, area, objective, linkedin_url, instagram_url")
-        .eq("user_id", userId)
+        .select("id, name, avatar_url, target_role, level, area, objective, linkedin_url, instagram_url")
+        .eq("id", userId)
         .single();
       setProfile(data as UserProfile | null);
 
