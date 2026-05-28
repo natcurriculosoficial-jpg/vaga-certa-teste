@@ -95,7 +95,7 @@ export function useAuth() {
     if (error) throw error;
 
     if (data.user && phone) {
-      await supabase.from("profiles").update({ phone, name }).eq("user_id", data.user.id);
+      await supabase.from("profiles").update({ phone, name }).eq("id", data.user.id);
     }
 
     return data;
