@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 
 interface UserProfile {
-  user_id: string;
+  id: string;
   name: string;
   avatar_url: string | null;
   target_role: string | null;
@@ -40,8 +40,8 @@ export default function UserProfileSheet({
     (async () => {
       const { data } = await supabase
         .from("profiles")
-        .select("user_id, name, avatar_url, target_role, level, area, objective, linkedin_url, instagram_url")
-        .eq("user_id", userId)
+        .select("id, name, avatar_url, target_role, level, area, objective, linkedin_url, instagram_url")
+        .eq("id", userId)
         .single();
       setProfile(data as UserProfile | null);
 

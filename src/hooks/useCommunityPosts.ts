@@ -60,11 +60,11 @@ export function useCommunityPosts() {
     const userIds = [...new Set(rawPosts.map(p => p.user_id))];
     const { data: profiles } = await supabase
       .from("profiles")
-      .select("user_id, name, avatar_url, target_role, level, area")
-      .in("user_id", userIds);
+      .select("id, name, avatar_url, target_role, level, area")
+      .in("id", userIds);
 
     const profileMap: Record<string, any> = {};
-    profiles?.forEach(p => { profileMap[p.user_id] = p; });
+    profiles?.forEach(p => { profileMap[p.id] = p; });
 
     // fetch topics
     const topicIds = [...new Set(rawPosts.filter(p => p.topic_id).map(p => p.topic_id!))];

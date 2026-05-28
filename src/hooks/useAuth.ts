@@ -4,7 +4,6 @@ import type { User, Session } from "@supabase/supabase-js";
 
 export interface Profile {
   id: string;
-  user_id: string;
   name: string;
   email: string;
   phone: string | null;
@@ -37,7 +36,7 @@ export function useAuth() {
     const { data, error } = await supabase
       .from("profiles")
       .select("*")
-      .eq("user_id", userId)
+      .eq("id", userId)
       .single();
     if (error) {
       console.error("Error fetching profile:", error);
@@ -96,7 +95,7 @@ export function useAuth() {
     if (error) throw error;
 
     if (data.user && phone) {
-      await supabase.from("profiles").update({ phone, name }).eq("user_id", data.user.id);
+      await supabase.from("profiles").update({ phone, name }).eq("id", data.user.id);
     }
 
     return data;
@@ -115,7 +114,7 @@ export function useAuth() {
     const { error } = await supabase
       .from("profiles")
       .update(data)
-      .eq("user_id", session.user.id);
+      .eq("id", session.user.id);
     if (error) {
       console.error("Error updating profile:", error);
       throw error;

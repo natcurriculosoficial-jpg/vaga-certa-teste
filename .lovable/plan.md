@@ -1,65 +1,84 @@
+# Migrar `profiles.id` para ser igual a `auth.users.id`
 
-## 1. Página de Pricing (`src/pages/Pricing.tsx`) — reescrita
+Hoje `profiles` tem duas colunas de identidade: `id` (UUID aleatório) e `user_id` (referência ao usuário do auth). RLS e todo o código usam `user_id`. Vamos eliminar `user_id` e fazer `id = auth.users.id`.
 
-Substituir a página atual (2 planos) por uma estrutura de **4 planos** com toggle Mensal/Anual.
+**Importante:** apenas a tabela `profiles` muda. As outras tabelas (`experiences`, `saved_jobs`, `community_posts`, `community_likes`, etc.) continuam usando a coluna `user_id` apontando para `auth.users.id` — não há motivo para mexer nelas e isso evita um refator gigante.
 
-### Estrutura visual
+## 1. Migration SQL (schema)
 
-- Header centralizado com título "Escolha seu plano" e subtítulo.
-- **Toggle Mensal / Anual** (componente `Switch` do shadcn) com badge "Economize ~25%" no lado Anual.
-- Grid responsivo: `grid-cols-1 md:grid-cols-2 lg:grid-cols-4` com 4 cards de plano.
-- Card do **Intermediário** destacado como "Mais popular" (ring primary, badge no topo).
-- Abaixo do grid: **tabela comparativa completa** de features (desktop) / acordeão por plano (mobile).
+```sql
+-- Remover trigger antigo enquanto migramos
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
 
-### Planos e preços
+-- Remover policies que dependem de user_id
+DROP POLICY "Users can insert their own profile" ON public.profiles;
+DROP POLICY "Users can update their own profile" ON public.profiles;
+DROP POLICY "Users can view their own profile"   ON public.profiles;
 
-| Plano | Mensal | Anual (equivalente/mês) |
-|---|---|---|
-| Trial | Grátis | Grátis |
-| Básico | R$ 19,90 | R$ 13,90 |
-| Intermediário | R$ 29,90 | R$ 22,25 |
-| PRO | R$ 44,90 | R$ 37,00 |
+-- Apagar profiles órfãos (id != user_id e sem auth user correspondente)
+-- e alinhar id = user_id
+UPDATE public.profiles SET id = user_id WHERE id <> user_id;
 
-Quando anual ativo, mostrar preço/mês + texto pequeno "cobrado anualmente (R$ X,XX/ano)".
+-- Remover default aleatório e dropar user_id
+ALTER TABLE public.profiles ALTER COLUMN id DROP DEFAULT;
+ALTER TABLE public.profiles DROP COLUMN user_id;
 
-### Tabela comparativa (linhas)
+-- Recriar policies usando id
+CREATE POLICY "Users can view their own profile"
+  ON public.profiles FOR SELECT USING (auth.uid() = id);
+CREATE POLICY "Users can update their own profile"
+  ON public.profiles FOR UPDATE USING (auth.uid() = id);
+CREATE POLICY "Users can insert their own profile"
+  ON public.profiles FOR INSERT WITH CHECK (auth.uid() = id);
 
-Currículo (editor), IA no currículo, Exportar PDF, Exportar DOCX, LinkedIn (editor), IA no LinkedIn, Checklist, Aulas, Radar de Vagas, Filtros avançados, Job Tracker, Simulador de Entrevista, Comunidade, Score de Empregabilidade, Benchmark Salarial, Recarga de créditos — exatamente com os valores fornecidos pelo usuário (✅ / ❌ / quotas / 🔒blur etc).
+-- Recriar função/trigger handle_new_user
+CREATE OR REPLACE FUNCTION public.handle_new_user()
+RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$
+BEGIN
+  INSERT INTO public.profiles (id, name, email)
+  VALUES (NEW.id,
+          COALESCE(NEW.raw_user_meta_data->>'name', ''),
+          COALESCE(NEW.email, ''));
+  RETURN NEW;
+END;
+$$;
 
-Ícones consistentes: `Check` (success), `X` (muted), `Lock` para "🔒blur", `Infinity` para "♾️", `Eye` para leitura.
-
-### CTAs
-
-- Trial: "Plano atual" (disabled) se for o plano do usuário, senão "Começar grátis".
-- Demais: "Assinar {Plano}" → por enquanto apenas `toast` "Em breve" (sem integração de pagamento — não foi pedida).
-
-### Estado
-
-```ts
-const [billing, setBilling] = useState<"monthly" | "annual">("monthly");
+CREATE TRIGGER on_auth_user_created
+AFTER INSERT ON auth.users
+FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
 ```
 
-Sem mudanças em backend, hooks ou banco — é puramente apresentação.
+`types.ts` será regenerado automaticamente após a migration.
 
----
+## 2. Mudanças de código
 
-## 2. Sidebar — corrigir cor de hover/ativo (`src/components/AppLayout.tsx`)
+**`src/hooks/useAuth.ts`**
+- Interface `Profile`: remover `user_id`.
+- `fetchProfile`: `.eq("id", userId)`.
+- `signup`: `.update(...).eq("id", data.user.id)`.
+- `updateProfile`: `.update(...).eq("id", session.user.id)`.
 
-Problema atual: item ativo usa `bg-white/15` com borda branca + box-shadow roxo neon, gerando um "halo" feio sobre o fundo `hsl(220 25% 8%)`.
+**`src/components/community/UserProfileSheet.tsx`**
+- Select `.from("profiles").select("id, name, avatar_url, ...").eq("id", userId)`.
+- Tipo `UserProfile`: trocar `user_id` por `id`.
 
-Mudanças:
+**`src/hooks/useCommunityPosts.ts`**
+- `.from("profiles").select("id, name, avatar_url, target_role, level, area").in("id", userIds)`.
+- `profileMap[p.id] = p`.
 
-- **Item ativo**: trocar `bg-white/15 ... border border-white/10` por um fundo sutil baseado no primary do design system: `bg-primary/15 text-white` com uma borda esquerda fina (`border-l-2 border-primary`) em vez de borda completa.
-- **Remover o `boxShadow` inline** (`0 0 20px hsl(250 84% 60% / 0.35)`) que cria o glow agressivo.
-- **Hover (não-ativo)**: trocar `hover:bg-white/10` por `hover:bg-white/[0.04]` (muito mais discreto).
-- **Variants warning/danger**: reduzir intensidade do hover (`hover:bg-amber-400/10`, `hover:bg-red-500/10`).
-- **Bottom nav mobile**: revisar `bg-primary/10` ativo para ficar consistente com a nova paleta.
+**`src/components/community/CommentsSection.tsx`**
+- Mesma troca: `select("id, ...").in("id", userIds)` e `profileMap[p.id]`.
 
-Sem outras alterações estruturais na sidebar (mantém layout, animação de colapso, gradient divider etc).
+**`src/pages/Resume.tsx`**
+- `.from("profiles").update({...}).eq("id", user.id)` (em vez de `user.user_id`).
 
----
+Outros arquivos (`Dashboard`, `Settings`, `JobRadar`, `PixModal`, etc.) usam `user_id` em **outras tabelas** ligadas a `authUser.id` — permanecem inalterados.
 
-## Arquivos afetados
+## 3. Validação pós-implementação
 
-- `src/pages/Pricing.tsx` — reescrito
-- `src/components/AppLayout.tsx` — ajuste cirúrgico de classes no `SidebarItem` e na bottom nav
+1. Confirmar tipos regenerados: `Profile.id` presente, `user_id` ausente.
+2. Login → carrega profile (sem 0 rows).
+3. Signup novo usuário → trigger cria row em `profiles` com id = auth.uid.
+4. Editar perfil em `/profile` e `/resume` salva sem erro RLS.
+5. Comunidade: posts e comentários exibem nome/avatar do autor.
+6. UserProfileSheet abre perfil de outro usuário corretamente.

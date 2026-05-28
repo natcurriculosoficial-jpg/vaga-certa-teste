@@ -48,10 +48,10 @@ export default function CommentsSection({ postId }: { postId: string }) {
     const userIds = [...new Set(raw.map(c => c.user_id))];
     const { data: profiles } = await supabase
       .from("profiles")
-      .select("user_id, name, avatar_url")
-      .in("user_id", userIds);
+      .select("id, name, avatar_url")
+      .in("id", userIds);
     const pMap: Record<string, any> = {};
-    profiles?.forEach(p => { pMap[p.user_id] = p; });
+    profiles?.forEach(p => { pMap[p.id] = p; });
 
     // user likes
     let likedSet = new Set<string>();
