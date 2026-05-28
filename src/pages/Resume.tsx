@@ -112,7 +112,7 @@ export default function Resume({ user }: { user: UserData }) {
         portfolio_url: personal.portfolio,
         objective,
         updated_at: new Date().toISOString(),
-      }).eq("user_id", user.user_id);
+      }).eq("id", user.id);
       if (error) throw error;
       toast({ title: "✅ Dados pessoais salvos!" });
     } catch (err: any) {
