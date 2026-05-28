@@ -114,7 +114,7 @@ export function useAuth() {
     const { error } = await supabase
       .from("profiles")
       .update(data)
-      .eq("user_id", session.user.id);
+      .eq("id", session.user.id);
     if (error) {
       console.error("Error updating profile:", error);
       throw error;
