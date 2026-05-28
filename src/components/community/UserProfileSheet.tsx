@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 
 interface UserProfile {
-  user_id: string;
+  id: string;
   name: string;
   avatar_url: string | null;
   target_role: string | null;
