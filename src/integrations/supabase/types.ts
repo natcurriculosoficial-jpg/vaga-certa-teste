@@ -680,7 +680,6 @@ export type Database = {
           target_role: string | null
           trial_used: boolean
           updated_at: string
-          user_id: string
         }
         Insert: {
           area?: string | null
@@ -689,7 +688,7 @@ export type Database = {
           created_at?: string
           current_plan?: string
           email?: string
-          id?: string
+          id: string
           instagram_url?: string | null
           level?: string | null
           linkedin_url?: string | null
@@ -702,7 +701,6 @@ export type Database = {
           target_role?: string | null
           trial_used?: boolean
           updated_at?: string
-          user_id: string
         }
         Update: {
           area?: string | null
@@ -724,7 +722,6 @@ export type Database = {
           target_role?: string | null
           trial_used?: boolean
           updated_at?: string
-          user_id?: string
         }
         Relationships: []
       }
