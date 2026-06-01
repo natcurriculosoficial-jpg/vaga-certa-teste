@@ -42,7 +42,7 @@ export default function UserProfileSheet({
         .from("profiles")
         .select("id, name, avatar_url, target_role, level, area, objective, linkedin_url, instagram_url")
         .eq("id", userId)
-        .single();
+        .maybeSingle();
       setProfile(data as UserProfile | null);
 
       if (myId && myId !== userId) {

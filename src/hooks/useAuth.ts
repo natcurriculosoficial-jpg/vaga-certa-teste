@@ -32,16 +32,36 @@ export function useAuth() {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const fetchProfile = useCallback(async (userId: string) => {
+  const fetchProfile = useCallback(async (authUser: User | string) => {
+    const userId = typeof authUser === "string" ? authUser : authUser.id;
+    const email = typeof authUser === "string" ? "" : authUser.email ?? "";
+    const name = typeof authUser === "string" ? "" : authUser.user_metadata?.name ?? "";
+
     const { data, error } = await supabase
       .from("profiles")
       .select("*")
       .eq("id", userId)
-      .single();
+      .maybeSingle();
     if (error) {
       console.error("Error fetching profile:", error);
       return null;
     }
+
+    if (!data) {
+      const { data: createdProfile, error: createError } = await supabase
+        .from("profiles")
+        .insert({ id: userId, email, name })
+        .select("*")
+        .maybeSingle();
+
+      if (createError) {
+        console.error("Error creating profile:", createError);
+        return null;
+      }
+
+      return createdProfile as Profile | null;
+    }
+
     return data as Profile;
   }, []);
 
@@ -53,7 +73,7 @@ export function useAuth() {
         if (newSession?.user) {
           // Use setTimeout to avoid Supabase deadlock
           setTimeout(async () => {
-            const p = await fetchProfile(newSession.user.id);
+            const p = await fetchProfile(newSession.user);
             setProfile(p);
             setLoading(false);
           }, 0);
@@ -68,7 +88,7 @@ export function useAuth() {
     supabase.auth.getSession().then(async ({ data: { session: s } }) => {
       setSession(s);
       if (s?.user) {
-        const p = await fetchProfile(s.user.id);
+        const p = await fetchProfile(s.user);
         setProfile(p);
       }
       setLoading(false);
