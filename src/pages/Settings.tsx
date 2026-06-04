@@ -160,7 +160,7 @@ export default function Settings() {
     }
     setAiLoading(true);
     try {
-      const { data, error } = await supabase.functions.invoke("ai", {
+      const { data, error } = await supabase.functions.invoke("ai-vagacerta", {
         body: {
           action: "generate_text",
           payload: {

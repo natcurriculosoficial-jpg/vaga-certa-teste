@@ -2,7 +2,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 async function callAI(action: string, payload: Record<string, any>): Promise<string> {
   try {
-    const { data, error } = await supabase.functions.invoke("ai", {
+    const { data, error } = await supabase.functions.invoke("ai-vagacerta", {
       body: { action, payload },
     });
 
