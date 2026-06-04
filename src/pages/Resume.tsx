@@ -9,6 +9,7 @@ import { toast } from "@/hooks/use-toast";
 import { UserData } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import * as gemini from "@/services/gemini";
+import { usePlan } from "@/hooks/usePlan";
 import LanguagesStep from "@/components/resume/LanguagesStep";
 import SkillsStep from "@/components/resume/SkillsStep";
 import ResumeExport from "@/components/resume/ResumeExport";
@@ -49,6 +50,7 @@ interface LanguageItem {
 }
 
 export default function Resume({ user }: { user: UserData }) {
+  const { useCredit, plan } = usePlan();
   const [personal, setPersonal] = useState({
     name: user.name || "", email: user.email || "", phone: user.phone || "",
     city: user.city || "", linkedin: user.linkedin_url || "", portfolio: user.portfolio_url || ""
@@ -240,6 +242,17 @@ export default function Resume({ user }: { user: UserData }) {
     const exp = experiences.find(e => e.id === id);
     if (!exp) return;
 
+    if (!plan.canUseAI) {
+      toast({ title: "Sem créditos de IA", description: "Faça upgrade do seu plano para usar a IA.", variant: "destructive" });
+      return;
+    }
+
+    const credit = await useCredit(1);
+    if (!credit.success) {
+      toast({ title: "Sem créditos de IA", description: "Seus créditos acabaram. Faça upgrade do plano.", variant: "destructive" });
+      return;
+    }
+
     setAiLoading(id);
     try {
       const { data, error } = await supabase.functions.invoke("ai-vagacerta", {
@@ -268,6 +281,15 @@ export default function Resume({ user }: { user: UserData }) {
   };
 
   const generateObj = async () => {
+    if (!plan.canUseAI) {
+      toast({ title: "Sem créditos de IA", description: "Faça upgrade do seu plano para usar a IA.", variant: "destructive" });
+      return;
+    }
+    const credit = await useCredit(1);
+    if (!credit.success) {
+      toast({ title: "Sem créditos de IA", description: "Seus créditos acabaram. Faça upgrade do plano.", variant: "destructive" });
+      return;
+    }
     setAiLoading("objective");
     const result = await gemini.generateObjective(user.target_role || "Analista", user.level || "Pleno", user.area || "TI");
     setObjective(result);
@@ -277,6 +299,15 @@ export default function Resume({ user }: { user: UserData }) {
 
   const improveObj = async () => {
     if (!objective) return;
+    if (!plan.canUseAI) {
+      toast({ title: "Sem créditos de IA", description: "Faça upgrade do seu plano para usar a IA.", variant: "destructive" });
+      return;
+    }
+    const credit = await useCredit(1);
+    if (!credit.success) {
+      toast({ title: "Sem créditos de IA", description: "Seus créditos acabaram. Faça upgrade do plano.", variant: "destructive" });
+      return;
+    }
     setAiLoading("objective");
     const result = await gemini.improveText(objective);
     setObjective(result);

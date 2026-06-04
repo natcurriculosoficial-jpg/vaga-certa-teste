@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
@@ -7,6 +7,8 @@ import { Sparkles, Copy, ExternalLink, Loader2, Linkedin } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { UserData } from "@/hooks/useAuth";
 import * as gemini from "@/services/gemini";
+import { supabase } from "@/integrations/supabase/client";
+import { usePlan } from "@/hooks/usePlan";
 
 const linkedinLinks: Record<string, string> = {
   headline: "https://www.linkedin.com/in/me/edit/intro/",
@@ -48,8 +50,37 @@ const sections = [
 ];
 
 export default function LinkedInPage({ user }: { user: UserData }) {
+  const { useCredit, plan } = usePlan();
   const [fields, setFields] = useState<Record<string, string>>({});
   const [aiLoading, setAiLoading] = useState<string | null>(null);
+  const loaded = useRef(false);
+  const saveTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Load saved sections from profile
+  useEffect(() => {
+    const load = async () => {
+      const { data } = await supabase
+        .from("profiles")
+        .select("linkedin_sections")
+        .eq("id", user.id)
+        .single();
+      if (data?.linkedin_sections && typeof data.linkedin_sections === "object") {
+        setFields(data.linkedin_sections as Record<string, string>);
+      }
+      loaded.current = true;
+    };
+    load();
+  }, [user.id]);
+
+  // Auto-save whenever fields change (after initial load)
+  useEffect(() => {
+    if (!loaded.current) return;
+    if (saveTimeout.current) clearTimeout(saveTimeout.current);
+    saveTimeout.current = setTimeout(async () => {
+      await supabase.from("profiles").update({ linkedin_sections: fields }).eq("id", user.id);
+    }, 1500);
+    return () => { if (saveTimeout.current) clearTimeout(saveTimeout.current); };
+  }, [fields, user.id]);
 
   const update = (id: string, value: string) => setFields(p => ({ ...p, [id]: value }));
 
@@ -59,6 +90,15 @@ export default function LinkedInPage({ user }: { user: UserData }) {
   };
 
   const generate = async (id: string) => {
+    if (!plan.canUseAI) {
+      toast({ title: "Sem créditos de IA", description: "Faça upgrade do seu plano para usar a IA.", variant: "destructive" });
+      return;
+    }
+    const credit = await useCredit(1);
+    if (!credit.success) {
+      toast({ title: "Sem créditos de IA", description: "Seus créditos acabaram. Faça upgrade do plano.", variant: "destructive" });
+      return;
+    }
     setAiLoading(id);
     let result = "";
     if (id === "headline") {
@@ -75,6 +115,15 @@ export default function LinkedInPage({ user }: { user: UserData }) {
 
   const improve = async (id: string) => {
     if (!fields[id]) return;
+    if (!plan.canUseAI) {
+      toast({ title: "Sem créditos de IA", description: "Faça upgrade do seu plano para usar a IA.", variant: "destructive" });
+      return;
+    }
+    const credit = await useCredit(1);
+    if (!credit.success) {
+      toast({ title: "Sem créditos de IA", description: "Seus créditos acabaram. Faça upgrade do plano.", variant: "destructive" });
+      return;
+    }
     setAiLoading(id);
     const result = await gemini.improveText(fields[id]);
     update(id, result);

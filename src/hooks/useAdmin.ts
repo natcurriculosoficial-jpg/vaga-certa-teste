@@ -10,8 +10,8 @@ export function useAdmin() {
       const { data: { user } } = await supabase.auth.getUser();
       if (!user) { setLoading(false); return; }
 
-      const { data } = await supabase
-        .from("user_roles")
+      const { data } = await (supabase as any)
+        .from("admin_vagacerta_userroles")
         .select("role")
         .eq("user_id", user.id)
         .eq("role", "admin")

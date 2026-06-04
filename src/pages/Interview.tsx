@@ -5,6 +5,8 @@ import { Label } from "@/components/ui/label";
 import { Send, Loader2, Mic } from "lucide-react";
 import { UserData } from "@/hooks/useAuth";
 import * as geminiService from "@/services/gemini";
+import { usePlan } from "@/hooks/usePlan";
+import { toast } from "@/hooks/use-toast";
 
 interface Message {
   role: "user" | "assistant";
@@ -12,6 +14,7 @@ interface Message {
 }
 
 export default function Interview({ user }: { user: UserData }) {
+  const { useCredit, plan } = usePlan();
   const [role, setRole] = useState(user.target_role || "");
   const [company, setCompany] = useState("");
   const [started, setStarted] = useState(false);
@@ -23,6 +26,15 @@ export default function Interview({ user }: { user: UserData }) {
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages]);
 
   const start = async () => {
+    if (!plan.canUseAI) {
+      toast({ title: "Sem créditos de IA", description: "Faça upgrade do plano para usar o simulador.", variant: "destructive" });
+      return;
+    }
+    const credit = await useCredit(1);
+    if (!credit.success) {
+      toast({ title: "Sem créditos de IA", description: "Seus créditos acabaram. Faça upgrade do plano.", variant: "destructive" });
+      return;
+    }
     setStarted(true);
     setLoading(true);
     const question = await geminiService.simulateInterview(role, company);
@@ -32,6 +44,15 @@ export default function Interview({ user }: { user: UserData }) {
 
   const send = async () => {
     if (!input.trim() || loading) return;
+    if (!plan.canUseAI) {
+      toast({ title: "Sem créditos de IA", description: "Seus créditos acabaram. Faça upgrade do plano.", variant: "destructive" });
+      return;
+    }
+    const credit = await useCredit(1);
+    if (!credit.success) {
+      toast({ title: "Sem créditos de IA", description: "Seus créditos acabaram. Faça upgrade do plano.", variant: "destructive" });
+      return;
+    }
     const userMsg: Message = { role: "user", content: input };
     const newMessages = [...messages, userMsg];
     setMessages(newMessages);

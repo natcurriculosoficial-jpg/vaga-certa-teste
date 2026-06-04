@@ -35,7 +35,11 @@ export default function FeatureGate({
   const navigate = useNavigate();
   const { plan, loading } = usePlan();
 
-  if (loading) return <>{children}</>;
+  if (loading) return (
+    <div className="flex items-center justify-center p-8 text-muted-foreground">
+      <div className="h-5 w-5 rounded-full border-2 border-current border-t-transparent animate-spin" />
+    </div>
+  );
 
   const userRank = PLAN_RANK[plan.slug] ?? 0;
   const requiredRank = PLAN_RANK[requiredPlan] ?? 99;
