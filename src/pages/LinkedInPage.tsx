@@ -77,7 +77,7 @@ export default function LinkedInPage({ user }: { user: UserData }) {
     if (!loaded.current) return;
     if (saveTimeout.current) clearTimeout(saveTimeout.current);
     saveTimeout.current = setTimeout(async () => {
-      await supabase.from("profiles").update({ linkedin_sections: fields }).eq("id", user.id);
+      await (supabase as any).from("profiles").update({ linkedin_sections: fields }).eq("id", user.id);
     }, 1500);
     return () => { if (saveTimeout.current) clearTimeout(saveTimeout.current); };
   }, [fields, user.id]);
