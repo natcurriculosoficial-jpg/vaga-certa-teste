@@ -59,7 +59,7 @@ export default function LinkedInPage({ user }: { user: UserData }) {
   // Load saved sections from profile
   useEffect(() => {
     const load = async () => {
-      const { data } = await supabase
+      const { data } = await (supabase as any)
         .from("profiles")
         .select("linkedin_sections")
         .eq("id", user.id)
