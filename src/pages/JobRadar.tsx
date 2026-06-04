@@ -215,16 +215,46 @@ export default function JobRadar() {
       ]);
 
       let allJobs: any[] = [];
+      const notDeployed: string[] = [];
+      const errored: string[] = [];
 
-      if (linkedinRes.status === "fulfilled" && linkedinRes.value.data?.jobs) {
-        allJobs.push(...linkedinRes.value.data.jobs.map((j: any) => ({ ...j, source: j.source || "LinkedIn" })));
-      }
-      if (mainRes.status === "fulfilled" && mainRes.value.data?.jobs) {
-        allJobs.push(...mainRes.value.data.jobs.map((j: any) => ({ ...j, source: j.source || "Gupy" })));
-      }
+      const handle = (label: string, res: PromiseSettledResult<any>) => {
+        if (res.status === "rejected") {
+          errored.push(label);
+          return;
+        }
+        const { data, error } = res.value;
+        if (error) {
+          const status = (error as any)?.context?.status;
+          const msg = (error as any)?.message || "";
+          if (status === 404 || /not\s*found|Failed to send/i.test(msg)) {
+            notDeployed.push(label);
+          } else {
+            errored.push(label);
+          }
+          return;
+        }
+        if (data?.jobs) {
+          allJobs.push(...data.jobs.map((j: any) => ({ ...j, source: j.source || label })));
+        }
+      };
+
+      handle("LinkedIn", linkedinRes);
+      handle("Gupy", mainRes);
 
       setExtResults(allJobs);
-      if (allJobs.length === 0) toast({ title: "Nenhuma vaga encontrada para essa busca" });
+
+      if (notDeployed.length > 0) {
+        toast({
+          title: "Busca externa indisponível",
+          description: `As funções de busca (${notDeployed.join(", ")}) ainda não foram publicadas no Supabase. Faça o deploy em Edge Functions para habilitar este recurso.`,
+          variant: "destructive",
+        });
+      } else if (allJobs.length === 0 && errored.length === 0) {
+        toast({ title: "Nenhuma vaga encontrada para essa busca" });
+      } else if (errored.length > 0 && allJobs.length === 0) {
+        toast({ title: "Erro na busca externa", variant: "destructive" });
+      }
     } catch {
       toast({ title: "Erro na busca externa", variant: "destructive" });
     }

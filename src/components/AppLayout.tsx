@@ -51,6 +51,7 @@ export default function AppLayout({
   const { user: profile } = useAuth();
   const [collapsed, setCollapsed] = useState(true);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const isDark = resolved === "dark";
 
   const SidebarItem = ({
     icon: Icon,
@@ -74,12 +75,12 @@ export default function AppLayout({
     };
 
     const colorClasses = variant === "warning"
-      ? "text-amber-300 hover:bg-amber-400/10"
+      ? isDark ? "text-amber-300 hover:bg-amber-400/10" : "text-amber-600 hover:bg-amber-400/10"
       : variant === "danger"
-      ? "text-red-300 hover:bg-red-500/10 hover:text-red-200"
+      ? isDark ? "text-red-300 hover:bg-red-500/10 hover:text-red-200" : "text-red-500 hover:bg-red-500/10"
       : active
-      ? "bg-primary/15 text-white font-medium"
-      : "text-white/60 hover:bg-white/[0.04] hover:text-white";
+      ? isDark ? "bg-primary/15 text-white font-medium" : "bg-primary/20 text-primary font-medium"
+      : isDark ? "text-white/60 hover:bg-white/[0.04] hover:text-white" : "text-slate-600 hover:bg-black/[0.06] hover:text-slate-900";
 
     const button = (
       <motion.button
@@ -133,34 +134,22 @@ export default function AppLayout({
 
     return (
       <div
-        className="flex flex-col h-full text-white relative bg-[hsl(220_25%_8%)]"
-        style={{
-          border: "1px solid hsl(220 14% 20%)",
-        }}
+        className={`flex flex-col h-full relative ${isDark ? "text-white" : "text-slate-700"}`}
+        style={{ background: isDark ? "hsl(220 25% 11%)" : "#deddff" }}
       >
         {/* Logo / header */}
         <div className={`flex items-center ${isCollapsed ? "justify-center py-4 px-2" : "px-5 py-4 gap-3"}`}>
-          <div className="w-9 h-9 rounded-[10px] gradient-primary flex items-center justify-center shrink-0">
-            <span className="text-xs font-bold text-white">VC</span>
-          </div>
-          <AnimatePresence>
-            {!isCollapsed && (
-              <motion.div
-                initial={{ opacity: 0, x: -8 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -8 }}
-                transition={{ duration: 0.15 }}
-                className="flex flex-col min-w-0"
-              >
-                <span className="text-sm font-semibold text-white truncate">Vaga Certa</span>
-                <span className="text-[11px] text-white/40 truncate">@{(profile?.name || "user").toLowerCase().split(" ")[0]}</span>
-              </motion.div>
-            )}
-          </AnimatePresence>
+          {isCollapsed ? (
+            <div className="w-9 h-9 rounded-[10px] gradient-primary flex items-center justify-center shrink-0">
+              <span className="text-xs font-bold text-white">VC</span>
+            </div>
+          ) : (
+            <Logo size="sm" />
+          )}
         </div>
 
         {/* Gradient divider */}
-        <div className="h-px mx-3 bg-gradient-to-r from-transparent via-white/10 to-transparent" />
+        <div className={`h-px mx-3 bg-gradient-to-r from-transparent ${isDark ? "via-white/10" : "via-black/[0.08]"} to-transparent`} />
 
         {/* Welcome */}
         <AnimatePresence>
@@ -172,14 +161,14 @@ export default function AppLayout({
               transition={{ duration: 0.2 }}
               className="px-5 py-3 overflow-hidden"
             >
-              <p className="text-[11px] text-white/40 uppercase tracking-wide">Bem-vindo de volta</p>
-              <p className="text-sm font-medium text-white truncate">{firstName}</p>
-              <p className="text-[11px] text-white/30 mt-0.5">{today}</p>
+              <p className={`text-[11px] uppercase tracking-wide ${isDark ? "text-white/40" : "text-slate-500"}`}>Bem-vindo de volta</p>
+              <p className={`text-sm font-medium truncate ${isDark ? "text-white" : "text-slate-800"}`}>{firstName}</p>
+              <p className={`text-[11px] mt-0.5 ${isDark ? "text-white/30" : "text-slate-400"}`}>{today}</p>
             </motion.div>
           )}
         </AnimatePresence>
 
-        <div className="h-px mx-3 bg-gradient-to-r from-transparent via-white/10 to-transparent" />
+        <div className={`h-px mx-3 bg-gradient-to-r from-transparent ${isDark ? "via-white/10" : "via-black/[0.08]"} to-transparent`} />
 
         {/* Main nav */}
         <nav className="flex-1 px-2 py-3 space-y-1 overflow-y-auto">
@@ -193,7 +182,7 @@ export default function AppLayout({
           <div className={isCollapsed ? "mb-1" : "mb-2 px-1"}>
             <CreditsIndicator collapsed={isCollapsed} />
           </div>
-          <div className="h-px mb-2 bg-gradient-to-r from-transparent via-white/10 to-transparent" />
+          <div className={`h-px mb-2 bg-gradient-to-r from-transparent ${isDark ? "via-white/10" : "via-black/[0.08]"} to-transparent`} />
           {NAV_BOTTOM.map(navItem => (
             <SidebarItem key={navItem.path} icon={navItem.icon} label={navItem.label} path={navItem.path} isCollapsed={isCollapsed} />
           ))}
@@ -214,7 +203,7 @@ export default function AppLayout({
         {!isMobile && (
           <button
             onClick={() => setCollapsed(c => !c)}
-            className="flex items-center justify-center py-3 border-t border-white/5 text-white/40 hover:text-white/90 transition-colors duration-200"
+            className={`flex items-center justify-center py-3 border-t ${isDark ? "border-white/5 text-white/40 hover:text-white/90" : "border-black/[0.06] text-slate-400 hover:text-slate-700"} transition-colors duration-200`}
           >
             {collapsed ? <PanelLeft className="h-4 w-4" /> : <PanelLeftClose className="h-4 w-4" />}
           </button>
