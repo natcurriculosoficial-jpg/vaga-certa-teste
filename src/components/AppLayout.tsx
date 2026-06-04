@@ -203,7 +203,7 @@ export default function AppLayout({
         {!isMobile && (
           <button
             onClick={() => setCollapsed(c => !c)}
-            className="flex items-center justify-center py-3 border-t border-white/5 text-white/40 hover:text-white/90 transition-colors duration-200"
+            className={`flex items-center justify-center py-3 border-t ${isDark ? "border-white/5 text-white/40 hover:text-white/90" : "border-black/[0.06] text-slate-400 hover:text-slate-700"} transition-colors duration-200`}
           >
             {collapsed ? <PanelLeft className="h-4 w-4" /> : <PanelLeftClose className="h-4 w-4" />}
           </button>
