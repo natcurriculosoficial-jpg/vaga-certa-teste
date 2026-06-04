@@ -51,6 +51,7 @@ export default function AppLayout({
   const { user: profile } = useAuth();
   const [collapsed, setCollapsed] = useState(true);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const isDark = resolved === "dark";
 
   const SidebarItem = ({
     icon: Icon,
