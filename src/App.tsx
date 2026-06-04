@@ -105,6 +105,7 @@ function AppRoutes() {
         <Route path="/members" element={<FeatureGate feature="all_courses" requiredPlan="essencial"><Members /></FeatureGate>} />
         <Route path="/members/course/:id" element={<GatedCourseViewer />} />
         <Route path="/admin" element={<Admin />} />
+        <Route path="/admin/edge-functions" element={<EdgeFunctionsPanel />} />
         <Route path="/" element={<Navigate to="/dashboard" replace />} />
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Routes>
