@@ -242,7 +242,7 @@ export default function Resume({ user }: { user: UserData }) {
 
     setAiLoading(id);
     try {
-      const { data, error } = await supabase.functions.invoke("ai", {
+      const { data, error } = await supabase.functions.invoke("ai-vagacerta", {
         body: {
           action: "generate_bullets",
           payload: {
