@@ -182,7 +182,7 @@ export default function AppLayout({
           <div className={isCollapsed ? "mb-1" : "mb-2 px-1"}>
             <CreditsIndicator collapsed={isCollapsed} />
           </div>
-          <div className="h-px mb-2 bg-gradient-to-r from-transparent via-white/10 to-transparent" />
+          <div className={`h-px mb-2 bg-gradient-to-r from-transparent ${isDark ? "via-white/10" : "via-black/[0.08]"} to-transparent`} />
           {NAV_BOTTOM.map(navItem => (
             <SidebarItem key={navItem.path} icon={navItem.icon} label={navItem.label} path={navItem.path} isCollapsed={isCollapsed} />
           ))}
