@@ -75,12 +75,12 @@ export default function AppLayout({
     };
 
     const colorClasses = variant === "warning"
-      ? "text-amber-300 hover:bg-amber-400/10"
+      ? isDark ? "text-amber-300 hover:bg-amber-400/10" : "text-amber-600 hover:bg-amber-400/10"
       : variant === "danger"
-      ? "text-red-300 hover:bg-red-500/10 hover:text-red-200"
+      ? isDark ? "text-red-300 hover:bg-red-500/10 hover:text-red-200" : "text-red-500 hover:bg-red-500/10"
       : active
-      ? "bg-primary/15 text-white font-medium"
-      : "text-white/60 hover:bg-white/[0.04] hover:text-white";
+      ? isDark ? "bg-primary/15 text-white font-medium" : "bg-primary/20 text-primary font-medium"
+      : isDark ? "text-white/60 hover:bg-white/[0.04] hover:text-white" : "text-slate-600 hover:bg-black/[0.06] hover:text-slate-900";
 
     const button = (
       <motion.button
