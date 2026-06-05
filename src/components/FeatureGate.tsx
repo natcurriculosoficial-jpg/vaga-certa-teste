@@ -53,7 +53,8 @@ export default function FeatureGate({
 
   const userRank = PLAN_RANK[plan.slug] ?? 0;
   const requiredRank = PLAN_RANK[requiredPlan] ?? 99;
-  const hasAccess = !forceLocked && userRank >= requiredRank;
+  const featureFlagOk = FEATURE_FLAG[feature]?.(plan) ?? true;
+  const hasAccess = !forceLocked && (userRank >= requiredRank || featureFlagOk);
 
   if (hasAccess) return <>{children}</>;
 
