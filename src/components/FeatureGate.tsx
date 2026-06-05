@@ -26,6 +26,16 @@ const PLAN_RANK: Record<string, number> = {
   profissional: 3,
 };
 
+const FEATURE_FLAG: Record<string, (p: ReturnType<typeof usePlan>["plan"]) => boolean> = {
+  job_tracker: (p) => p.hasJobTracker,
+  interview: (p) => p.hasInterview,
+  community_read: (p) => p.hasCommunityRead,
+  community_write: (p) => p.hasCommunityWrite,
+  all_courses: (p) => p.hasAllCourses,
+  docx_export: (p) => p.canExportDocx,
+  advanced_filters: (p) => p.hasAdvancedFilters,
+};
+
 export default function FeatureGate({
   feature,
   requiredPlan,
