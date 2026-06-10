@@ -30,14 +30,23 @@ export default function Interview({ user }: { user: UserData }) {
       toast({ title: "Sem créditos de IA", description: "Faça upgrade do plano para usar o simulador.", variant: "destructive" });
       return;
     }
+    setLoading(true);
+    let question = "";
+    try {
+      question = await geminiService.simulateInterview(role, company);
+      if (!question) throw new Error("empty");
+    } catch {
+      setLoading(false);
+      toast({ title: "Falha na IA", description: "Não foi possível iniciar a entrevista. Tente novamente.", variant: "destructive" });
+      return;
+    }
     const credit = await useCredit(1);
     if (!credit.success) {
+      setLoading(false);
       toast({ title: "Sem créditos de IA", description: "Seus créditos acabaram. Faça upgrade do plano.", variant: "destructive" });
       return;
     }
     setStarted(true);
-    setLoading(true);
-    const question = await geminiService.simulateInterview(role, company);
     setMessages([{ role: "assistant", content: `Olá! Eu sou a **Nat IA** 🎤, sua entrevistadora virtual.\n\nVamos simular uma entrevista para ${role}${company ? ` na ${company}` : ""}. Vou fazer perguntas variadas para te preparar.\n\n**Primeira pergunta:**\n\n${question}` }]);
     setLoading(false);
   };
