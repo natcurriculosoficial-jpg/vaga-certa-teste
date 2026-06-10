@@ -77,7 +77,12 @@ export default function LinkedInPage({ user }: { user: UserData }) {
     if (!loaded.current) return;
     if (saveTimeout.current) clearTimeout(saveTimeout.current);
     saveTimeout.current = setTimeout(async () => {
-      await (supabase as any).from("profiles").update({ linkedin_sections: fields }).eq("id", user.id);
+      try {
+        const { error } = await (supabase as any).from("profiles").update({ linkedin_sections: fields }).eq("id", user.id);
+        if (error) throw error;
+      } catch {
+        toast({ title: "Falha ao salvar", description: "Verifique sua conexão.", variant: "destructive" });
+      }
     }, 1500);
     return () => { if (saveTimeout.current) clearTimeout(saveTimeout.current); };
   }, [fields, user.id]);
