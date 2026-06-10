@@ -9,12 +9,10 @@ export interface PlanInfo {
   billingCycle: string | null;
   trialEnd: string | null;
   periodEnd: string | null;
-
-  aiCreditsRemaining: number; // -1 = unlimited
+  aiCreditsRemaining: number;
   aiCreditsTotal: number;
   bonusCredits: number;
   isUnlimited: boolean;
-
   canUseAI: boolean;
   canExportDocx: boolean;
   hasJobTracker: boolean;
@@ -48,21 +46,31 @@ const FREE_PLAN: PlanInfo = {
   hasPrioritySupport: false,
 };
 
+let _planCache: { userId: string; plan: PlanInfo; ts: number } | null = null;
+const CACHE_TTL_MS = 5 * 60 * 1000;
+
+function getCachedPlan(userId: string): PlanInfo | null {
+  if (!_planCache || _planCache.userId !== userId) return null;
+  if (Date.now() - _planCache.ts > CACHE_TTL_MS) return null;
+  return _planCache.plan;
+}
+
 export function usePlan() {
   const { session } = useAuth();
-  const [plan, setPlan] = useState<PlanInfo>(FREE_PLAN);
-  const [loading, setLoading] = useState(true);
+  const userId = session?.user?.id ?? null;
+  const cachedPlan = userId ? getCachedPlan(userId) : null;
+  const [plan, setPlan] = useState<PlanInfo>(cachedPlan ?? FREE_PLAN);
+  const [loading, setLoading] = useState(cachedPlan === null);
 
   const fetchPlan = useCallback(async () => {
-    if (!session?.user?.id) {
+    if (!userId) {
+      _planCache = null;
       setPlan(FREE_PLAN);
       setLoading(false);
       return;
     }
 
     try {
-      const userId = session.user.id;
-
       const nowIso = new Date().toISOString();
       const { data: sub } = await (supabase as any)
         .from("subscriptions")
@@ -81,6 +89,7 @@ export function usePlan() {
         .maybeSingle();
 
       if (!sub || !sub.plans) {
+        _planCache = { userId, plan: FREE_PLAN, ts: Date.now() };
         setPlan(FREE_PLAN);
         setLoading(false);
         return;
@@ -94,7 +103,7 @@ export function usePlan() {
           (credits.bonus_credits || 0)
         : 0;
 
-      setPlan({
+      const newPlan: PlanInfo = {
         slug: p.slug,
         name: p.name,
         status: sub.status,
@@ -114,14 +123,17 @@ export function usePlan() {
         hasAllCourses: !!p.has_all_courses,
         hasAdvancedFilters: !!p.has_advanced_filters,
         hasPrioritySupport: !!p.has_priority_support,
-      });
+      };
+
+      _planCache = { userId, plan: newPlan, ts: Date.now() };
+      setPlan(newPlan);
     } catch (err) {
       console.error("Error fetching plan:", err);
       setPlan(FREE_PLAN);
     } finally {
       setLoading(false);
     }
-  }, [session?.user?.id]);
+  }, [userId]);
 
   useEffect(() => {
     fetchPlan();
@@ -129,34 +141,30 @@ export function usePlan() {
 
   const useCredit = useCallback(
     async (amount: number = 1): Promise<{ success: boolean; remaining: number }> => {
-      if (!session?.user?.id) return { success: false, remaining: 0 };
-
+      if (!userId) return { success: false, remaining: 0 };
       const { data, error } = await (supabase as any).rpc("use_ai_credit", {
-        p_user_id: session.user.id,
+        p_user_id: userId,
         p_amount: amount,
       });
-
       if (error || !data) return { success: false, remaining: 0 };
-
+      _planCache = null;
       await fetchPlan();
       return { success: !!data.success, remaining: data.remaining ?? 0 };
     },
-    [session?.user?.id, fetchPlan]
+    [userId, fetchPlan]
   );
 
   const checkAccess = useCallback(
     async (feature: string): Promise<{ allowed: boolean; reason?: string }> => {
-      if (!session?.user?.id) return { allowed: false, reason: "not_authenticated" };
-
+      if (!userId) return { allowed: false, reason: "not_authenticated" };
       const { data, error } = await (supabase as any).rpc("check_feature_access", {
-        p_user_id: session.user.id,
+        p_user_id: userId,
         p_feature: feature,
       });
-
       if (error || !data) return { allowed: false, reason: "error" };
       return { allowed: !!data.allowed, reason: data.reason };
     },
-    [session?.user?.id]
+    [userId]
   );
 
   return {
