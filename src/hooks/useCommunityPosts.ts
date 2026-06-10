@@ -130,7 +130,7 @@ export function useCommunityPosts() {
   useEffect(() => {
     setLoading(true);
     fetchPosts(true);
-  }, [filter, topicFilter]);
+  }, [filter, topicFilter, userId]);
 
   const loadMore = () => {
     setPage(p => p + 1);
