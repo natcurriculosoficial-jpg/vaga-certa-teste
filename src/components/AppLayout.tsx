@@ -7,7 +7,7 @@ import {
   Search, Sun, Moon, Menu, X, BookOpen,
   CheckSquare, Users,
 } from "lucide-react";
-import { useAdmin } from "@/hooks/useAdmin";
+
 import { useAuth } from "@/hooks/useAuth";
 import Logo from "./Logo";
 import { Button } from "./ui/button";
@@ -47,7 +47,7 @@ export default function AppLayout({
   const navigate = useNavigate();
   const location = useLocation();
   const { resolved, setTheme } = useTheme();
-  const { isAdmin } = useAdmin();
+  
   const { user: profile } = useAuth();
   const [collapsed, setCollapsed] = useState(true);
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -186,9 +186,6 @@ export default function AppLayout({
           {NAV_BOTTOM.map(navItem => (
             <SidebarItem key={navItem.path} icon={navItem.icon} label={navItem.label} path={navItem.path} isCollapsed={isCollapsed} />
           ))}
-          {isAdmin && (
-            <SidebarItem icon={Shield} label="Admin" path="/admin" isCollapsed={isCollapsed} />
-          )}
           <SidebarItem
             icon={Crown}
             label="Upgrade PRO"
