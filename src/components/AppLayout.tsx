@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   LayoutDashboard, FileText, Linkedin, Radar, Mic,
   Settings, LogOut, Crown, PanelLeft, PanelLeftClose,
-  Search, Sun, Moon, Menu, X, BookOpen, Shield,
+  Search, Sun, Moon, Menu, X, BookOpen,
   CheckSquare, Users,
 } from "lucide-react";
 import { useAdmin } from "@/hooks/useAdmin";
