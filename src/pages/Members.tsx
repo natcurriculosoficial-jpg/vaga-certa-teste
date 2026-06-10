@@ -18,15 +18,20 @@ export default function Members() {
   const navigate = useNavigate();
 
   useEffect(() => {
-    supabase
-      .from("courses")
-      .select("id, title, description, thumbnail_url")
-      .eq("published", true)
-      .order("created_at")
-      .then(({ data }) => {
+    (async () => {
+      try {
+        const { data } = await supabase
+          .from("courses")
+          .select("id, title, description, thumbnail_url")
+          .eq("published", true)
+          .order("created_at");
         setCourses(data || []);
+      } catch {
+        setCourses([]);
+      } finally {
         setLoading(false);
-      });
+      }
+    })();
   }, []);
 
   return (

@@ -43,9 +43,14 @@ export default function Community() {
   const sentinelRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    supabase.from("community_topics").select("*").order("sort_order").then(({ data }) => {
-      setTopics(data || []);
-    });
+    (async () => {
+      try {
+        const { data, error } = await supabase.from("community_topics").select("*").order("sort_order");
+        if (!error) setTopics(data || []);
+      } catch {
+        setTopics([]);
+      }
+    })();
 
     // Fetch trending hashtags from real data
     const fetchTrendingHashtags = async () => {
