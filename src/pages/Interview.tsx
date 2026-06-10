@@ -57,24 +57,35 @@ export default function Interview({ user }: { user: UserData }) {
       toast({ title: "Sem créditos de IA", description: "Seus créditos acabaram. Faça upgrade do plano.", variant: "destructive" });
       return;
     }
-    const credit = await useCredit(1);
-    if (!credit.success) {
-      toast({ title: "Sem créditos de IA", description: "Seus créditos acabaram. Faça upgrade do plano.", variant: "destructive" });
-      return;
-    }
     const userMsg: Message = { role: "user", content: input };
     const newMessages = [...messages, userMsg];
     setMessages(newMessages);
+    const currentInput = input;
     setInput("");
     setLoading(true);
 
-    // Evaluate answer
     const lastQuestion = messages.filter(m => m.role === "assistant").pop()?.content || "";
-    const evaluation = await geminiService.evaluateAnswer(lastQuestion, input, role);
+    let evaluation = "";
+    let nextQuestion = "";
+    try {
+      evaluation = await geminiService.evaluateAnswer(lastQuestion, currentInput, role);
+      const prevQA = newMessages.map(m => `${m.role === "assistant" ? "Entrevistador" : "Candidato"}: ${m.content}`).join("\n");
+      nextQuestion = await geminiService.simulateInterview(role, company, prevQA);
+      if (!evaluation || !nextQuestion) throw new Error("empty");
+    } catch {
+      setLoading(false);
+      setMessages(messages);
+      setInput(currentInput);
+      toast({ title: "Falha na IA", description: "Não foi possível processar sua resposta. Tente novamente.", variant: "destructive" });
+      return;
+    }
 
-    // Generate next question
-    const prevQA = newMessages.map(m => `${m.role === "assistant" ? "Entrevistador" : "Candidato"}: ${m.content}`).join("\n");
-    const nextQuestion = await geminiService.simulateInterview(role, company, prevQA);
+    const credit = await useCredit(1);
+    if (!credit.success) {
+      setLoading(false);
+      toast({ title: "Sem créditos de IA", description: "Seus créditos acabaram. Faça upgrade do plano.", variant: "destructive" });
+      return;
+    }
 
     setMessages(prev => [...prev, {
       role: "assistant",
