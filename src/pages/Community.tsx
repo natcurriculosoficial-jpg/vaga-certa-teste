@@ -108,11 +108,11 @@ export default function Community() {
     setProfileOpen(true);
   };
 
-  const filteredPosts = searchQuery
+  const filteredPosts = debouncedSearch
     ? posts.filter(p =>
-        p.content.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        p.author_name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        p.hashtags?.some(h => h.toLowerCase().includes(searchQuery.toLowerCase()))
+        p.content.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+        p.author_name?.toLowerCase().includes(debouncedSearch.toLowerCase()) ||
+        p.hashtags?.some(h => h.toLowerCase().includes(debouncedSearch.toLowerCase()))
       )
     : posts;
 
