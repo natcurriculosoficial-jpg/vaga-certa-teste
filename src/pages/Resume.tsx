@@ -142,18 +142,24 @@ export default function Resume({ user }: { user: UserData }) {
     }
   };
 
-  const updateExp = useCallback(async (id: string, field: keyof Experience, value: string) => {
+  const updateExp = useCallback((id: string, field: keyof Experience, value: string) => {
     setExperiences(p => p.map(e => e.id === id ? { ...e, [field]: value } : e));
-    // Debounced save handled by blur
   }, []);
 
-  const saveExp = async (exp: Experience) => {
+  const saveExp = async (id: string, patch?: Partial<Experience>) => {
+    // Read freshest state via callback to avoid stale closure
+    let target: Experience | undefined;
+    setExperiences(prev => {
+      target = prev.find(e => e.id === id);
+      if (target && patch) target = { ...target, ...patch };
+      return prev;
+    });
+    if (!target) return;
     const { error } = await supabase.from("experiences").update({
-      company: exp.company, role: exp.role, period: exp.period, description: exp.description,
+      company: target.company, role: target.role, period: target.period, description: target.description,
       updated_at: new Date().toISOString(),
-    }).eq("id", exp.id);
+    }).eq("id", id);
     if (error) toast({ title: "Erro ao salvar experiência", variant: "destructive" });
-    else toast({ title: "✅ Experiência salva!" });
   };
 
   const deleteExp = async (id: string) => {
