@@ -38,6 +38,12 @@ export default function CreatePost({ topics, onCreated }: { topics: Topic[]; onC
     }, 2000);
   }, [content, topicId]);
 
+  // Revoke object URL when image preview changes or component unmounts
+  useEffect(() => {
+    if (!imagePreview) return;
+    return () => URL.revokeObjectURL(imagePreview);
+  }, [imagePreview]);
+
   const handleImage = (e: React.ChangeEvent<HTMLInputElement>) => {
     const f = e.target.files?.[0];
     if (!f) return;
