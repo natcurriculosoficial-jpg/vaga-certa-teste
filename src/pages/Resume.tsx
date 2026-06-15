@@ -277,7 +277,7 @@ export default function Resume({ user }: { user: UserData }) {
       const result = data?.text || "";
       const updated = { ...exp, description: result };
       setExperiences(p => p.map(e => e.id === id ? updated : e));
-      await saveExp(updated);
+      await saveExp(id, { description: result });
       toast({ title: "✨ Bullets gerados com IA!", description: "Descrição atualizada com 4-6 pontos de impacto." });
     } catch (err) {
       toast({ title: "Erro ao gerar bullets", variant: "destructive" });
