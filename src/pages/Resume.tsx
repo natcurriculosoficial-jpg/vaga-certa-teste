@@ -415,13 +415,13 @@ export default function Resume({ user }: { user: UserData }) {
                     </Button>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    <div className="space-y-1"><Label className="text-xs">Empresa</Label><Input value={exp.company} onChange={e => updateExp(exp.id, "company", e.target.value)} onBlur={() => saveExp(exp)} className="bg-muted/50" /></div>
-                    <div className="space-y-1"><Label className="text-xs">Cargo</Label><Input value={exp.role} onChange={e => updateExp(exp.id, "role", e.target.value)} onBlur={() => saveExp(exp)} className="bg-muted/50" /></div>
-                    <div className="space-y-1 md:col-span-2"><Label className="text-xs">Período</Label><Input value={exp.period} onChange={e => updateExp(exp.id, "period", e.target.value)} onBlur={() => saveExp(exp)} placeholder="Jan 2020 - Dez 2023" className="bg-muted/50" /></div>
+                    <div className="space-y-1"><Label className="text-xs">Empresa</Label><Input value={exp.company} onChange={e => updateExp(exp.id, "company", e.target.value)} onBlur={() => saveExp(exp.id)} className="bg-muted/50" /></div>
+                    <div className="space-y-1"><Label className="text-xs">Cargo</Label><Input value={exp.role} onChange={e => updateExp(exp.id, "role", e.target.value)} onBlur={() => saveExp(exp.id)} className="bg-muted/50" /></div>
+                    <div className="space-y-1 md:col-span-2"><Label className="text-xs">Período</Label><Input value={exp.period} onChange={e => updateExp(exp.id, "period", e.target.value)} onBlur={() => saveExp(exp.id)} placeholder="Jan 2020 - Dez 2023" className="bg-muted/50" /></div>
                   </div>
                   <div className="space-y-1">
                     <Label className="text-xs">Descrição</Label>
-                    <Textarea value={exp.description} onChange={e => updateExp(exp.id, "description", e.target.value)} onBlur={() => saveExp(exp)} className="bg-muted/50 min-h-[100px]" placeholder="Descreva suas atividades..." />
+                    <Textarea value={exp.description} onChange={e => updateExp(exp.id, "description", e.target.value)} onBlur={() => saveExp(exp.id)} className="bg-muted/50 min-h-[100px]" placeholder="Descreva suas atividades..." />
                   </div>
                   <Button size="sm" onClick={() => generateBullets(exp.id)} disabled={aiLoading === exp.id}>
                     {aiLoading === exp.id ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <Sparkles className="h-3 w-3 mr-1" />}
