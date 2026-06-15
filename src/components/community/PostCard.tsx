@@ -118,3 +118,6 @@ function PostCardComponent({
     </motion.div>
   );
 }
+
+const PostCard = memo(PostCardComponent);
+export default PostCard;
