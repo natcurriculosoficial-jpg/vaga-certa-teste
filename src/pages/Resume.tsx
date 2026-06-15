@@ -75,10 +75,10 @@ export default function Resume({ user }: { user: UserData }) {
         const uid = authUser.id;
 
         const [expRes, eduRes, skillRes, langRes] = await Promise.all([
-          supabase.from("experiences").select("*").eq("user_id", uid).order("sort_order", { ascending: true }),
-          supabase.from("education").select("*").eq("user_id", uid).order("sort_order", { ascending: true }),
-          supabase.from("skills").select("*").eq("user_id", uid),
-          supabase.from("languages").select("*").eq("user_id", uid),
+          supabase.from("experiences").select("id, company, role, period, description, sort_order").eq("user_id", uid).order("sort_order", { ascending: true }),
+          supabase.from("education").select("id, institution, course, period, description, sort_order").eq("user_id", uid).order("sort_order", { ascending: true }),
+          supabase.from("skills").select("id, name, type").eq("user_id", uid),
+          supabase.from("languages").select("id, language, level").eq("user_id", uid),
         ]);
 
         if (cancelled) return;
