@@ -146,7 +146,9 @@ export function useCommunityPosts() {
       await supabase.from("community_likes").delete().eq("user_id", userId).eq("post_id", postId);
       setPosts(prev => prev.map(p => p.id === postId ? { ...p, liked: false, likes_count: Math.max(0, p.likes_count - 1) } : p));
     } else {
-      await supabase.from("community_likes").insert({ user_id: userId, post_id: postId });
+      await supabase
+        .from("community_likes")
+        .upsert({ user_id: userId, post_id: postId }, { onConflict: "user_id,post_id", ignoreDuplicates: true });
       setPosts(prev => prev.map(p => p.id === postId ? { ...p, liked: true, likes_count: p.likes_count + 1 } : p));
     }
   };
@@ -160,7 +162,9 @@ export function useCommunityPosts() {
       await supabase.from("community_favorites").delete().eq("user_id", userId).eq("post_id", postId);
       setPosts(prev => prev.map(p => p.id === postId ? { ...p, favorited: false, favorites_count: Math.max(0, p.favorites_count - 1) } : p));
     } else {
-      await supabase.from("community_favorites").insert({ user_id: userId, post_id: postId });
+      await supabase
+        .from("community_favorites")
+        .upsert({ user_id: userId, post_id: postId }, { onConflict: "user_id,post_id", ignoreDuplicates: true });
       setPosts(prev => prev.map(p => p.id === postId ? { ...p, favorited: true, favorites_count: p.favorites_count + 1 } : p));
     }
   };
