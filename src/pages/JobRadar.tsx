@@ -81,7 +81,7 @@ export default function JobRadar() {
 
         const { data, error } = await supabase
           .from("saved_jobs")
-          .select("*")
+          .select("id, title, company, location, type, url, notes, status, created_at, updated_at")
           .eq("user_id", user.id)
           .order("created_at", { ascending: false });
 
