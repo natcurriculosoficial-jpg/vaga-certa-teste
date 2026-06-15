@@ -292,16 +292,22 @@ export default function Resume({ user }: { user: UserData }) {
       toast({ title: "Sem créditos de IA", description: "Faça upgrade do seu plano para usar a IA.", variant: "destructive" });
       return;
     }
-    const credit = await useCredit(1);
-    if (!credit.success) {
-      toast({ title: "Sem créditos de IA", description: "Seus créditos acabaram. Faça upgrade do plano.", variant: "destructive" });
-      return;
-    }
     setAiLoading("objective");
-    const result = await gemini.generateObjective(user.target_role || "Analista", user.level || "Pleno", user.area || "TI");
-    setObjective(result);
-    setAiLoading(null);
-    toast({ title: "Objetivo gerado com IA ✨" });
+    try {
+      const result = await gemini.generateObjective(user.target_role || "Analista", user.level || "Pleno", user.area || "TI");
+      if (!result) throw new Error("empty");
+      const credit = await useCredit(1);
+      if (!credit.success) {
+        toast({ title: "Sem créditos de IA", description: "Seus créditos acabaram. Faça upgrade do plano.", variant: "destructive" });
+        return;
+      }
+      setObjective(result);
+      toast({ title: "Objetivo gerado com IA ✨" });
+    } catch {
+      toast({ title: "Falha na IA", description: "Não foi possível gerar. Tente novamente.", variant: "destructive" });
+    } finally {
+      setAiLoading(null);
+    }
   };
 
   const improveObj = async () => {
@@ -310,16 +316,22 @@ export default function Resume({ user }: { user: UserData }) {
       toast({ title: "Sem créditos de IA", description: "Faça upgrade do seu plano para usar a IA.", variant: "destructive" });
       return;
     }
-    const credit = await useCredit(1);
-    if (!credit.success) {
-      toast({ title: "Sem créditos de IA", description: "Seus créditos acabaram. Faça upgrade do plano.", variant: "destructive" });
-      return;
-    }
     setAiLoading("objective");
-    const result = await gemini.improveText(objective);
-    setObjective(result);
-    setAiLoading(null);
-    toast({ title: "Texto melhorado ✨" });
+    try {
+      const result = await gemini.improveText(objective);
+      if (!result) throw new Error("empty");
+      const credit = await useCredit(1);
+      if (!credit.success) {
+        toast({ title: "Sem créditos de IA", description: "Seus créditos acabaram. Faça upgrade do plano.", variant: "destructive" });
+        return;
+      }
+      setObjective(result);
+      toast({ title: "Texto melhorado ✨" });
+    } catch {
+      toast({ title: "Falha na IA", description: "Não foi possível melhorar. Tente novamente.", variant: "destructive" });
+    } finally {
+      setAiLoading(null);
+    }
   };
 
   // Data for export
