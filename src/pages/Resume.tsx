@@ -253,12 +253,6 @@ export default function Resume({ user }: { user: UserData }) {
       return;
     }
 
-    const credit = await useCredit(1);
-    if (!credit.success) {
-      toast({ title: "Sem créditos de IA", description: "Seus créditos acabaram. Faça upgrade do plano.", variant: "destructive" });
-      return;
-    }
-
     setAiLoading(id);
     try {
       const { data, error } = await supabase.functions.invoke("ai-vagacerta", {
@@ -275,6 +269,13 @@ export default function Resume({ user }: { user: UserData }) {
       });
       if (error) throw error;
       const result = data?.text || "";
+      if (!result) throw new Error("empty");
+      // Consume credit ONLY after AI succeeds
+      const credit = await useCredit(1);
+      if (!credit.success) {
+        toast({ title: "Sem créditos de IA", description: "Seus créditos acabaram. Faça upgrade do plano.", variant: "destructive" });
+        return;
+      }
       const updated = { ...exp, description: result };
       setExperiences(p => p.map(e => e.id === id ? updated : e));
       await saveExp(id, { description: result });
