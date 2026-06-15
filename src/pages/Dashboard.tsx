@@ -67,6 +67,7 @@ export default function Dashboard({ user }: { user: Profile }) {
 
   const [resumeStatus, setResumeStatus] = useState({ hasExperience: false, hasBullets: false });
   const [savedJobsCount, setSavedJobsCount] = useState(0);
+  const [interviewCount, setInterviewCount] = useState(0);
   const [recommendedJobs, setRecommendedJobs] = useState<SavedJob[]>([]);
 
   useEffect(() => {
@@ -74,7 +75,7 @@ export default function Dashboard({ user }: { user: Profile }) {
       const { data: { user: authUser } } = await supabase.auth.getUser();
       if (!authUser) return;
 
-      const [expRes, jobsCountRes, jobsRes] = await Promise.all([
+      const [expRes, jobsCountRes, jobsRes, interviewRes] = await Promise.all([
         supabase.from("experiences").select("id, description").eq("user_id", authUser.id),
         supabase.from("saved_jobs").select("id", { count: "exact", head: true }).eq("user_id", authUser.id),
         supabase.from("saved_jobs").select("id, title, company, location, type, url, status")
@@ -82,12 +83,16 @@ export default function Dashboard({ user }: { user: Profile }) {
           .in("status", ["saved", "applied", "process"])
           .order("created_at", { ascending: false })
           .limit(3),
+        supabase.from("feature_usage").select("id", { count: "exact", head: true })
+          .eq("user_id", authUser.id)
+          .eq("feature", "interview-simulator"),
       ]);
 
       const hasExp = (expRes.data?.length ?? 0) > 0;
       const hasBullets = expRes.data?.some(e => e.description?.includes("•")) ?? false;
       setResumeStatus({ hasExperience: hasExp, hasBullets });
       setSavedJobsCount(jobsCountRes.count ?? 0);
+      setInterviewCount(interviewRes.count ?? 0);
       setRecommendedJobs(jobsRes.data || []);
     };
     fetchStatus();
@@ -98,7 +103,7 @@ export default function Dashboard({ user }: { user: Profile }) {
   const metrics = [
     { label: "Currículo", value: resumeComplete ? "100%" : resumeStatus.hasExperience ? "50%" : "0%", sub: resumeComplete ? "completo" : "pendente", icon: FileText },
     { label: "Candidaturas", value: String(savedJobsCount), sub: "vagas salvas", icon: Target },
-    { label: "Entrevistas", value: "0", sub: "agendadas", icon: Mic },
+    { label: "Entrevistas", value: String(interviewCount), sub: "simulações", icon: Mic },
     { label: "LinkedIn", value: user.linkedin_url ? "100%" : "0%", sub: user.linkedin_url ? "conectado" : "pendente", icon: Linkedin },
   ];
 
