@@ -59,7 +59,7 @@ function PostCardComponent({
             {post.author_level && <span className="text-xs text-muted-foreground">· {post.author_level}</span>}
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-xs text-muted-foreground">{timeAgo(post.created_at)}</span>
+            <span className="text-xs text-muted-foreground">{relativeTime}</span>
             {post.topic_name && (
               <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full">
                 {post.topic_emoji} {post.topic_name}
