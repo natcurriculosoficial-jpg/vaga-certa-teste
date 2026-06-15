@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { memo, useMemo, useState } from "react";
 import { motion } from "framer-motion";
 import { Heart, MessageCircle, Star, Link2 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
@@ -13,7 +13,7 @@ function timeAgo(date: string) {
   return `há ${Math.floor(s / 86400)}d`;
 }
 
-export default function PostCard({
+function PostCardComponent({
   post,
   onLike,
   onFavorite,
@@ -28,6 +28,7 @@ export default function PostCard({
   const [showComments, setShowComments] = useState(false);
   const isLong = post.content.length > 280;
   const initials = (post.author_name || "U").split(" ").map(w => w[0]).join("").slice(0, 2).toUpperCase();
+  const relativeTime = useMemo(() => timeAgo(post.created_at), [post.created_at]);
 
   const share = () => {
     navigator.clipboard.writeText(`${window.location.origin}/community?post=${post.id}`);
@@ -58,7 +59,7 @@ export default function PostCard({
             {post.author_level && <span className="text-xs text-muted-foreground">· {post.author_level}</span>}
           </div>
           <div className="flex items-center gap-2">
-            <span className="text-xs text-muted-foreground">{timeAgo(post.created_at)}</span>
+            <span className="text-xs text-muted-foreground">{relativeTime}</span>
             {post.topic_name && (
               <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full">
                 {post.topic_emoji} {post.topic_name}
@@ -117,3 +118,6 @@ export default function PostCard({
     </motion.div>
   );
 }
+
+const PostCard = memo(PostCardComponent);
+export default PostCard;

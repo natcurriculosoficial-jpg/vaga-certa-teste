@@ -75,10 +75,10 @@ export default function Resume({ user }: { user: UserData }) {
         const uid = authUser.id;
 
         const [expRes, eduRes, skillRes, langRes] = await Promise.all([
-          supabase.from("experiences").select("*").eq("user_id", uid).order("sort_order", { ascending: true }),
-          supabase.from("education").select("*").eq("user_id", uid).order("sort_order", { ascending: true }),
-          supabase.from("skills").select("*").eq("user_id", uid),
-          supabase.from("languages").select("*").eq("user_id", uid),
+          supabase.from("experiences").select("id, company, role, period, description, sort_order").eq("user_id", uid).order("sort_order", { ascending: true }),
+          supabase.from("education").select("id, institution, course, period, description, sort_order").eq("user_id", uid).order("sort_order", { ascending: true }),
+          supabase.from("skills").select("id, name, type").eq("user_id", uid),
+          supabase.from("languages").select("id, language, level").eq("user_id", uid),
         ]);
 
         if (cancelled) return;
@@ -142,18 +142,24 @@ export default function Resume({ user }: { user: UserData }) {
     }
   };
 
-  const updateExp = useCallback(async (id: string, field: keyof Experience, value: string) => {
+  const updateExp = useCallback((id: string, field: keyof Experience, value: string) => {
     setExperiences(p => p.map(e => e.id === id ? { ...e, [field]: value } : e));
-    // Debounced save handled by blur
   }, []);
 
-  const saveExp = async (exp: Experience) => {
+  const saveExp = async (id: string, patch?: Partial<Experience>) => {
+    // Read freshest state via callback to avoid stale closure
+    let target: Experience | undefined;
+    setExperiences(prev => {
+      target = prev.find(e => e.id === id);
+      if (target && patch) target = { ...target, ...patch };
+      return prev;
+    });
+    if (!target) return;
     const { error } = await supabase.from("experiences").update({
-      company: exp.company, role: exp.role, period: exp.period, description: exp.description,
+      company: target.company, role: target.role, period: target.period, description: target.description,
       updated_at: new Date().toISOString(),
-    }).eq("id", exp.id);
+    }).eq("id", id);
     if (error) toast({ title: "Erro ao salvar experiência", variant: "destructive" });
-    else toast({ title: "✅ Experiência salva!" });
   };
 
   const deleteExp = async (id: string) => {
@@ -247,12 +253,6 @@ export default function Resume({ user }: { user: UserData }) {
       return;
     }
 
-    const credit = await useCredit(1);
-    if (!credit.success) {
-      toast({ title: "Sem créditos de IA", description: "Seus créditos acabaram. Faça upgrade do plano.", variant: "destructive" });
-      return;
-    }
-
     setAiLoading(id);
     try {
       const { data, error } = await supabase.functions.invoke("ai-vagacerta", {
@@ -269,9 +269,16 @@ export default function Resume({ user }: { user: UserData }) {
       });
       if (error) throw error;
       const result = data?.text || "";
+      if (!result) throw new Error("empty");
+      // Consume credit ONLY after AI succeeds
+      const credit = await useCredit(1);
+      if (!credit.success) {
+        toast({ title: "Sem créditos de IA", description: "Seus créditos acabaram. Faça upgrade do plano.", variant: "destructive" });
+        return;
+      }
       const updated = { ...exp, description: result };
       setExperiences(p => p.map(e => e.id === id ? updated : e));
-      await saveExp(updated);
+      await saveExp(id, { description: result });
       toast({ title: "✨ Bullets gerados com IA!", description: "Descrição atualizada com 4-6 pontos de impacto." });
     } catch (err) {
       toast({ title: "Erro ao gerar bullets", variant: "destructive" });
@@ -285,16 +292,22 @@ export default function Resume({ user }: { user: UserData }) {
       toast({ title: "Sem créditos de IA", description: "Faça upgrade do seu plano para usar a IA.", variant: "destructive" });
       return;
     }
-    const credit = await useCredit(1);
-    if (!credit.success) {
-      toast({ title: "Sem créditos de IA", description: "Seus créditos acabaram. Faça upgrade do plano.", variant: "destructive" });
-      return;
-    }
     setAiLoading("objective");
-    const result = await gemini.generateObjective(user.target_role || "Analista", user.level || "Pleno", user.area || "TI");
-    setObjective(result);
-    setAiLoading(null);
-    toast({ title: "Objetivo gerado com IA ✨" });
+    try {
+      const result = await gemini.generateObjective(user.target_role || "Analista", user.level || "Pleno", user.area || "TI");
+      if (!result) throw new Error("empty");
+      const credit = await useCredit(1);
+      if (!credit.success) {
+        toast({ title: "Sem créditos de IA", description: "Seus créditos acabaram. Faça upgrade do plano.", variant: "destructive" });
+        return;
+      }
+      setObjective(result);
+      toast({ title: "Objetivo gerado com IA ✨" });
+    } catch {
+      toast({ title: "Falha na IA", description: "Não foi possível gerar. Tente novamente.", variant: "destructive" });
+    } finally {
+      setAiLoading(null);
+    }
   };
 
   const improveObj = async () => {
@@ -303,16 +316,22 @@ export default function Resume({ user }: { user: UserData }) {
       toast({ title: "Sem créditos de IA", description: "Faça upgrade do seu plano para usar a IA.", variant: "destructive" });
       return;
     }
-    const credit = await useCredit(1);
-    if (!credit.success) {
-      toast({ title: "Sem créditos de IA", description: "Seus créditos acabaram. Faça upgrade do plano.", variant: "destructive" });
-      return;
-    }
     setAiLoading("objective");
-    const result = await gemini.improveText(objective);
-    setObjective(result);
-    setAiLoading(null);
-    toast({ title: "Texto melhorado ✨" });
+    try {
+      const result = await gemini.improveText(objective);
+      if (!result) throw new Error("empty");
+      const credit = await useCredit(1);
+      if (!credit.success) {
+        toast({ title: "Sem créditos de IA", description: "Seus créditos acabaram. Faça upgrade do plano.", variant: "destructive" });
+        return;
+      }
+      setObjective(result);
+      toast({ title: "Texto melhorado ✨" });
+    } catch {
+      toast({ title: "Falha na IA", description: "Não foi possível melhorar. Tente novamente.", variant: "destructive" });
+    } finally {
+      setAiLoading(null);
+    }
   };
 
   // Data for export
@@ -409,13 +428,13 @@ export default function Resume({ user }: { user: UserData }) {
                     </Button>
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                    <div className="space-y-1"><Label className="text-xs">Empresa</Label><Input value={exp.company} onChange={e => updateExp(exp.id, "company", e.target.value)} onBlur={() => saveExp(exp)} className="bg-muted/50" /></div>
-                    <div className="space-y-1"><Label className="text-xs">Cargo</Label><Input value={exp.role} onChange={e => updateExp(exp.id, "role", e.target.value)} onBlur={() => saveExp(exp)} className="bg-muted/50" /></div>
-                    <div className="space-y-1 md:col-span-2"><Label className="text-xs">Período</Label><Input value={exp.period} onChange={e => updateExp(exp.id, "period", e.target.value)} onBlur={() => saveExp(exp)} placeholder="Jan 2020 - Dez 2023" className="bg-muted/50" /></div>
+                    <div className="space-y-1"><Label className="text-xs">Empresa</Label><Input value={exp.company} onChange={e => updateExp(exp.id, "company", e.target.value)} onBlur={() => saveExp(exp.id)} className="bg-muted/50" /></div>
+                    <div className="space-y-1"><Label className="text-xs">Cargo</Label><Input value={exp.role} onChange={e => updateExp(exp.id, "role", e.target.value)} onBlur={() => saveExp(exp.id)} className="bg-muted/50" /></div>
+                    <div className="space-y-1 md:col-span-2"><Label className="text-xs">Período</Label><Input value={exp.period} onChange={e => updateExp(exp.id, "period", e.target.value)} onBlur={() => saveExp(exp.id)} placeholder="Jan 2020 - Dez 2023" className="bg-muted/50" /></div>
                   </div>
                   <div className="space-y-1">
                     <Label className="text-xs">Descrição</Label>
-                    <Textarea value={exp.description} onChange={e => updateExp(exp.id, "description", e.target.value)} onBlur={() => saveExp(exp)} className="bg-muted/50 min-h-[100px]" placeholder="Descreva suas atividades..." />
+                    <Textarea value={exp.description} onChange={e => updateExp(exp.id, "description", e.target.value)} onBlur={() => saveExp(exp.id)} className="bg-muted/50 min-h-[100px]" placeholder="Descreva suas atividades..." />
                   </div>
                   <Button size="sm" onClick={() => generateBullets(exp.id)} disabled={aiLoading === exp.id}>
                     {aiLoading === exp.id ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : <Sparkles className="h-3 w-3 mr-1" />}
