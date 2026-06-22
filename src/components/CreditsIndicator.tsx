@@ -12,7 +12,7 @@ export default function CreditsIndicator({ collapsed }: Props) {
 
   if (loading) return null;
 
-  const go = () => navigate("/pricing");
+  const go = () => navigate("/credits");
 
   // Unlimited (PRO)
   if (plan.isUnlimited) {
