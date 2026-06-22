@@ -26,6 +26,7 @@ import Admin from "@/pages/Admin";
 import Checklist from "@/pages/Checklist";
 import Community from "@/pages/Community";
 import EdgeFunctionsPanel from "@/pages/EdgeFunctionsPanel";
+import BuyCredits from "@/pages/BuyCredits";
 
 const ONBOARDING_COURSE_ID = "00000000-0000-0000-0000-000000000001";
 function GatedCourseViewer() {
@@ -106,6 +107,7 @@ function AppRoutes() {
         <Route path="/members/course/:id" element={<GatedCourseViewer />} />
         <Route path="/admin" element={<Admin />} />
         <Route path="/admin/edge-functions" element={<EdgeFunctionsPanel />} />
+        <Route path="/credits" element={<BuyCredits />} />
         <Route path="/" element={<Navigate to="/dashboard" replace />} />
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Routes>
