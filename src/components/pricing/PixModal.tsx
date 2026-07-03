@@ -16,6 +16,7 @@ interface Props {
 }
 
 interface PixData {
+  paymentId: string;
   qrCodeImage: string;
   pixCode: string;
   amount: number;
@@ -116,18 +117,15 @@ export function PixModal({ open, onOpenChange, planSlug, billingCycle }: Props) 
     if (!open || !pix || confirmed || expired) return;
 
     const check = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+      // Só confirma quando o webhook do Asaas registrar o pagamento desta cobrança
       const { data } = await (supabase as any)
-        .from("subscriptions")
-        .select("status, plans!inner(slug)")
-        .eq("user_id", user.id)
-        .eq("status", "active")
-        .eq("plans.slug", planSlug)
-        .order("updated_at", { ascending: false })
+        .from("payment_history")
+        .select("id")
+        .eq("external_payment_id", pix.paymentId)
+        .eq("status", "succeeded")
         .limit(1)
         .maybeSingle();
-      if (data?.status === "active") {
+      if (data) {
         setConfirmed(true);
         toast({ title: "🎉 Pagamento confirmado!", description: "Seu plano foi ativado." });
         await refreshPlan();

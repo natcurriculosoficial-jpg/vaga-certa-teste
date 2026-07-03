@@ -17,6 +17,7 @@ interface Props {
 }
 
 interface PixData {
+  paymentId: string;
   qrCodeImage: string;
   pixCode: string;
   amount: number;
@@ -27,7 +28,7 @@ function brl(v: number) {
 }
 
 export function CreditPixModal({ open, onOpenChange, packageIndex, packageLabel, credits }: Props) {
-  const { plan, refreshPlan } = usePlan();
+  const { refreshPlan } = usePlan();
   const [loading, setLoading] = useState(false);
   const [pix, setPix] = useState<PixData | null>(null);
   const [copied, setCopied] = useState(false);
@@ -38,14 +39,12 @@ export function CreditPixModal({ open, onOpenChange, packageIndex, packageLabel,
   const [cpf, setCpf] = useState("");
   const pollRef = useRef<number | null>(null);
   const tickRef = useRef<number | null>(null);
-  const initialCredits = useRef<number>(plan.aiCreditsRemaining);
 
   const generate = async (cpfValue?: string) => {
     setLoading(true);
     setExpired(false);
     setConfirmed(false);
     setPix(null);
-    initialCredits.current = plan.aiCreditsRemaining;
     try {
       const { data, error } = await supabase.functions.invoke("create-credit-recharge", {
         body: { packageIndex, paymentMethod: "pix", ...(cpfValue ? { cpf: cpfValue } : {}) },
@@ -111,24 +110,19 @@ export function CreditPixModal({ open, onOpenChange, packageIndex, packageLabel,
     if (!open || !pix || confirmed || expired) return;
 
     const check = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) return;
+      // Só confirma quando o webhook do Asaas registrar o pagamento desta cobrança
       const { data } = await (supabase as any)
-        .from("ai_credits")
-        .select("plan_credits_remaining, bonus_credits, trial_credits_remaining")
-        .eq("user_id", user.id)
+        .from("payment_history")
+        .select("id")
+        .eq("external_payment_id", pix.paymentId)
+        .eq("status", "succeeded")
+        .limit(1)
         .maybeSingle();
       if (data) {
-        const total =
-          (data.plan_credits_remaining || 0) +
-          (data.bonus_credits || 0) +
-          (data.trial_credits_remaining || 0);
-        if (total > initialCredits.current) {
-          setConfirmed(true);
-          toast({ title: "Pagamento confirmado!", description: `+${credits} créditos adicionados.` });
-          await refreshPlan();
-          setTimeout(() => onOpenChange(false), 2200);
-        }
+        setConfirmed(true);
+        toast({ title: "Pagamento confirmado!", description: `+${credits} créditos adicionados.` });
+        await refreshPlan();
+        setTimeout(() => onOpenChange(false), 2200);
       }
     };
 
