@@ -6,6 +6,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { motion, AnimatePresence } from "framer-motion";
 import { usePlan } from "@/hooks/usePlan";
+import { formatCpf, isCpfComplete, readFunctionsError, functionsErrorMessage, getProfileCpf } from "./pix-utils";
 
 interface Props {
   open: boolean;
@@ -33,11 +34,13 @@ export function CreditPixModal({ open, onOpenChange, packageIndex, packageLabel,
   const [confirmed, setConfirmed] = useState(false);
   const [secondsLeft, setSecondsLeft] = useState<number | null>(null);
   const [expired, setExpired] = useState(false);
+  const [needCpf, setNeedCpf] = useState(false);
+  const [cpf, setCpf] = useState("");
   const pollRef = useRef<number | null>(null);
   const tickRef = useRef<number | null>(null);
   const initialCredits = useRef<number>(plan.aiCreditsRemaining);
 
-  const generate = async () => {
+  const generate = async (cpfValue?: string) => {
     setLoading(true);
     setExpired(false);
     setConfirmed(false);
@@ -45,15 +48,21 @@ export function CreditPixModal({ open, onOpenChange, packageIndex, packageLabel,
     initialCredits.current = plan.aiCreditsRemaining;
     try {
       const { data, error } = await supabase.functions.invoke("create-credit-recharge", {
-        body: { packageIndex, paymentMethod: "pix" },
+        body: { packageIndex, paymentMethod: "pix", ...(cpfValue ? { cpf: cpfValue } : {}) },
       });
       if (error) throw error;
+      setNeedCpf(false);
       setPix(data as PixData);
       setSecondsLeft(30 * 60);
     } catch (e: any) {
+      const body = await readFunctionsError(e);
+      if (body?.error === "cpf_required") {
+        setNeedCpf(true);
+        return;
+      }
       toast({
         title: "Erro ao gerar PIX",
-        description: e.message || "Tente novamente.",
+        description: functionsErrorMessage(body) || e.message || "Tente novamente.",
         variant: "destructive",
       });
       onOpenChange(false);
@@ -62,14 +71,26 @@ export function CreditPixModal({ open, onOpenChange, packageIndex, packageLabel,
     }
   };
 
+  // Generate on open (pede CPF antes se o perfil ainda não tiver)
   useEffect(() => {
-    if (open && !pix && !loading) generate();
+    if (open && !pix && !loading && !needCpf) {
+      (async () => {
+        const savedCpf = await getProfileCpf();
+        if (savedCpf) {
+          generate();
+        } else {
+          setNeedCpf(true);
+        }
+      })();
+    }
     if (!open) {
       setPix(null);
       setConfirmed(false);
       setExpired(false);
       setSecondsLeft(null);
       setCopied(false);
+      setNeedCpf(false);
+      setCpf("");
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open]);
@@ -138,6 +159,35 @@ export function CreditPixModal({ open, onOpenChange, packageIndex, packageLabel,
         </DialogHeader>
 
         <AnimatePresence mode="wait">
+          {needCpf && !loading && !confirmed && (
+            <motion.div
+              key="cpf"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0 }}
+              className="space-y-4 py-2"
+            >
+              <p className="text-sm text-muted-foreground">
+                Para gerar o PIX, informe seu CPF (exigência do banco emissor).
+              </p>
+              <input
+                value={cpf}
+                onChange={(e) => setCpf(formatCpf(e.target.value))}
+                placeholder="000.000.000-00"
+                inputMode="numeric"
+                autoFocus
+                className="w-full px-3 py-2 text-sm font-mono bg-muted/40 border border-border rounded-md"
+              />
+              <Button
+                className="w-full"
+                disabled={!isCpfComplete(cpf)}
+                onClick={() => generate(cpf)}
+              >
+                Gerar PIX
+              </Button>
+            </motion.div>
+          )}
+
           {loading && (
             <motion.div
               key="loading"
@@ -172,7 +222,7 @@ export function CreditPixModal({ open, onOpenChange, packageIndex, packageLabel,
               className="flex flex-col items-center py-8 gap-4"
             >
               <p className="text-sm text-muted-foreground">Este PIX expirou.</p>
-              <Button onClick={generate} className="gap-2">
+              <Button onClick={() => generate()} className="gap-2">
                 <RefreshCw className="h-4 w-4" /> Gerar novo PIX
               </Button>
             </motion.div>
