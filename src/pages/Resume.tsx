@@ -13,6 +13,7 @@ import { usePlan } from "@/hooks/usePlan";
 import LanguagesStep from "@/components/resume/LanguagesStep";
 import SkillsStep from "@/components/resume/SkillsStep";
 import ResumeExport from "@/components/resume/ResumeExport";
+import { EducationPeriodFields } from "@/components/resume/EducationPeriodFields";
 import { Skeleton } from "@/components/ui/skeleton";
 
 interface Experience {
@@ -464,7 +465,7 @@ export default function Resume({ user }: { user: UserData }) {
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     <div className="space-y-1"><Label className="text-xs">Instituição</Label><Input value={edu.institution} onChange={e => setEducations(p => p.map(ed => ed.id === edu.id ? { ...ed, institution: e.target.value } : ed))} onBlur={() => saveEdu(edu)} className="bg-muted/50" /></div>
                     <div className="space-y-1"><Label className="text-xs">Curso</Label><Input value={edu.course} onChange={e => setEducations(p => p.map(ed => ed.id === edu.id ? { ...ed, course: e.target.value } : ed))} onBlur={() => saveEdu(edu)} className="bg-muted/50" /></div>
-                    <div className="space-y-1 md:col-span-2"><Label className="text-xs">Período</Label><Input value={edu.period} onChange={e => setEducations(p => p.map(ed => ed.id === edu.id ? { ...ed, period: e.target.value } : ed))} onBlur={() => saveEdu(edu)} className="bg-muted/50" /></div>
+                    <EducationPeriodFields value={edu.period} onCommit={v => { setEducations(p => p.map(ed => ed.id === edu.id ? { ...ed, period: v } : ed)); saveEdu({ ...edu, period: v }); }} />
                   </div>
                 </div>
               ))}

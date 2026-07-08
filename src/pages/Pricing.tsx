@@ -52,11 +52,15 @@ const FEATURE_ROWS: {
   {
     label: "Currículo com IA",
     render: (p) => ({
-      ok: true,
-      text: p.ai_credits_monthly === null ? "Ilimitado" : `${p.ai_credits_monthly} créditos/mês`,
+      ok: p.ai_credits_monthly === null || p.ai_credits_monthly > 0,
+      text: p.ai_credits_monthly === null
+        ? "Ilimitado"
+        : p.ai_credits_monthly > 0
+          ? `${p.ai_credits_monthly} créditos/mês`
+          : undefined,
     }),
   },
-  { label: "LinkedIn com IA", render: () => ({ ok: true }) },
+  { label: "LinkedIn com IA", render: (p) => ({ ok: p.ai_credits_monthly === null || p.ai_credits_monthly > 0 }) },
   {
     label: "Busca de Vagas",
     render: (p) => ({ ok: true, text: p.has_advanced_filters ? "Ilimitado" : "5/dia" }),
@@ -64,7 +68,7 @@ const FEATURE_ROWS: {
   { label: "Aulas e Conteúdos", render: () => ({ ok: true }) },
   {
     label: "Export PDF",
-    render: (p) => ({ ok: true, text: p.slug === "essencial" ? "com marca d'água" : "limpo" }),
+    render: (p) => ({ ok: true, text: p.slug === "essencial" || p.slug === "free" ? "com marca d'água" : "limpo" }),
   },
   { label: "Export DOCX", render: (p) => ({ ok: p.has_docx_export }) },
   { label: "Filtros avançados", render: (p) => ({ ok: p.has_advanced_filters }) },
@@ -235,7 +239,7 @@ export default function Pricing() {
           <Loader2 className="h-6 w-6 animate-spin text-primary" />
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
           {plans.map((p, idx) => {
             const isHighlight = p.slug === "candidato";
             const price = billing === "monthly" ? p.price_monthly : p.price_annual;
@@ -245,13 +249,16 @@ export default function Pricing() {
             const isUpgrade = planRank > userRank;
             const isDowngrade = planRank < userRank && !isCurrent;
             const isLoading = checkoutLoading === p.id;
+            const isFree = p.slug === "free";
             const buttonLabel = isCurrent
               ? "Seu plano atual"
-              : isUpgrade
-                ? "Fazer upgrade"
-                : isDowngrade
-                  ? "Plano inferior"
-                  : "Assinar";
+              : isFree
+                ? "Plano gratuito"
+                : isUpgrade
+                  ? "Fazer upgrade"
+                  : isDowngrade
+                    ? "Plano inferior"
+                    : "Assinar";
 
             return (
               <motion.div
@@ -282,9 +289,11 @@ export default function Pricing() {
                     <span className="text-sm text-muted-foreground">/mês</span>
                   </div>
                   <div className="text-xs text-muted-foreground mt-1">
-                    {billing === "annual"
-                      ? `cobrado ${brl(price * 12)}/ano`
-                      : "cobrado mensalmente"}
+                    {isFree
+                      ? "grátis para sempre"
+                      : billing === "annual"
+                        ? `cobrado ${brl(price * 12)}/ano`
+                        : "cobrado mensalmente"}
                   </div>
                   {((billing === "annual" ? p.pix_price_yearly_cents : p.pix_price_monthly_cents) ?? 0) > 0 && (
                     <Badge variant="secondary" className="mt-2 gap-1 bg-success/10 text-success border-success/20 hover:bg-success/10">
@@ -296,7 +305,7 @@ export default function Pricing() {
                 <Button
                   className={`w-full ${isHighlight && !isCurrent && !isDowngrade ? "gradient-primary text-white" : ""}`}
                   variant={isCurrent || isDowngrade ? "outline" : isHighlight ? "default" : "outline"}
-                  disabled={isCurrent || isDowngrade || isLoading}
+                  disabled={isCurrent || isDowngrade || isFree || isLoading}
                   onClick={() => handleSubscribe(p)}
                 >
                   {isLoading ? (
