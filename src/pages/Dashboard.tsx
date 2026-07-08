@@ -85,7 +85,7 @@ export default function Dashboard({ user }: { user: Profile }) {
           .limit(3),
         supabase.from("feature_usage").select("id", { count: "exact", head: true })
           .eq("user_id", authUser.id)
-          .eq("feature", "interview-simulator"),
+          .eq("feature_key", "interview_session"),
       ]);
 
       const hasExp = (expRes.data?.length ?? 0) > 0;

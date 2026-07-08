@@ -32,7 +32,7 @@ export async function improveText(text: string): Promise<string> {
 }
 
 export async function transformToBulletPoints(text: string, role?: string): Promise<string> {
-  return callAI("generate_bullets", { text, role });
+  return callAI("generate_bullets", { text, experienceRole: role });
 }
 
 export async function generateObjective(role: string, level: string, area: string): Promise<string> {

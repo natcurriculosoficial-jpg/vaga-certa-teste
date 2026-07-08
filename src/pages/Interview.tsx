@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Send, Loader2, Mic } from "lucide-react";
 import { UserData } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
 import * as geminiService from "@/services/gemini";
 import { usePlan } from "@/hooks/usePlan";
 import { toast } from "@/hooks/use-toast";
@@ -46,6 +47,9 @@ export default function Interview({ user }: { user: UserData }) {
       toast({ title: "Sem créditos de IA", description: "Seus créditos acabaram. Faça upgrade do plano.", variant: "destructive" });
       return;
     }
+    supabase.rpc("register_interview_session").then(({ error }) => {
+      if (error) console.error("register_interview_session:", error);
+    });
     setStarted(true);
     setMessages([{ role: "assistant", content: `Olá! Eu sou a **Nat IA** 🎤, sua entrevistadora virtual.\n\nVamos simular uma entrevista para ${role}${company ? ` na ${company}` : ""}. Vou fazer perguntas variadas para te preparar.\n\n**Primeira pergunta:**\n\n${question}` }]);
     setLoading(false);

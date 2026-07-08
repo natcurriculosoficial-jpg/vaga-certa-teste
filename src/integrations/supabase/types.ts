@@ -14,35 +14,124 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_vagacerta_userroles: {
+        Row: {
+          id: string
+          role: string | null
+          user_id: string
+        }
+        Insert: {
+          id?: string
+          role?: string | null
+          user_id: string
+        }
+        Update: {
+          id?: string
+          role?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      ai_credit_purchases: {
+        Row: {
+          created_at: string | null
+          credits_amount: number
+          id: string
+          payment_id: string | null
+          price_cents: number
+          user_id: string
+        }
+        Insert: {
+          created_at?: string | null
+          credits_amount: number
+          id?: string
+          payment_id?: string | null
+          price_cents: number
+          user_id: string
+        }
+        Update: {
+          created_at?: string | null
+          credits_amount?: number
+          id?: string
+          payment_id?: string | null
+          price_cents?: number
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_credit_purchases_payment_id_fkey"
+            columns: ["payment_id"]
+            isOneToOne: false
+            referencedRelation: "payment_history"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ai_credits: {
         Row: {
           bonus_credits: number
           id: string
-          period_end: string | null
-          period_start: string | null
           plan_credits_remaining: number
+          plan_credits_reset_at: string | null
+          plan_credits_total: number
           trial_credits_remaining: number
-          updated_at: string
+          updated_at: string | null
           user_id: string
         }
         Insert: {
           bonus_credits?: number
           id?: string
-          period_end?: string | null
-          period_start?: string | null
           plan_credits_remaining?: number
+          plan_credits_reset_at?: string | null
+          plan_credits_total?: number
           trial_credits_remaining?: number
-          updated_at?: string
+          updated_at?: string | null
           user_id: string
         }
         Update: {
           bonus_credits?: number
           id?: string
-          period_end?: string | null
-          period_start?: string | null
           plan_credits_remaining?: number
+          plan_credits_reset_at?: string | null
+          plan_credits_total?: number
           trial_credits_remaining?: number
-          updated_at?: string
+          updated_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      asaas_pending_charges: {
+        Row: {
+          billing_cycle: string | null
+          created_at: string
+          credits: number | null
+          payment_id: string
+          plan_id: string | null
+          plan_slug: string | null
+          price_cents: number | null
+          type: string
+          user_id: string
+        }
+        Insert: {
+          billing_cycle?: string | null
+          created_at?: string
+          credits?: number | null
+          payment_id: string
+          plan_id?: string | null
+          plan_slug?: string | null
+          price_cents?: number | null
+          type: string
+          user_id: string
+        }
+        Update: {
+          billing_cycle?: string | null
+          created_at?: string
+          credits?: number | null
+          payment_id?: string
+          plan_id?: string | null
+          plan_slug?: string | null
+          price_cents?: number | null
+          type?: string
           user_id?: string
         }
         Relationships: []
@@ -133,30 +222,30 @@ export type Database = {
       community_comments: {
         Row: {
           content: string
-          created_at: string
+          created_at: string | null
           id: string
           likes_count: number
           parent_id: string | null
-          post_id: string
-          user_id: string
+          post_id: string | null
+          user_id: string | null
         }
         Insert: {
           content: string
-          created_at?: string
+          created_at?: string | null
           id?: string
           likes_count?: number
           parent_id?: string | null
-          post_id: string
-          user_id: string
+          post_id?: string | null
+          user_id?: string | null
         }
         Update: {
           content?: string
-          created_at?: string
+          created_at?: string | null
           id?: string
           likes_count?: number
           parent_id?: string | null
-          post_id?: string
-          user_id?: string
+          post_id?: string | null
+          user_id?: string | null
         }
         Relationships: [
           {
@@ -177,22 +266,19 @@ export type Database = {
       }
       community_favorites: {
         Row: {
-          created_at: string
           id: string
-          post_id: string
-          user_id: string
+          post_id: string | null
+          user_id: string | null
         }
         Insert: {
-          created_at?: string
           id?: string
-          post_id: string
-          user_id: string
+          post_id?: string | null
+          user_id?: string | null
         }
         Update: {
-          created_at?: string
           id?: string
-          post_id?: string
-          user_id?: string
+          post_id?: string | null
+          user_id?: string | null
         }
         Relationships: [
           {
@@ -227,22 +313,19 @@ export type Database = {
       }
       community_likes: {
         Row: {
-          created_at: string
           id: string
-          post_id: string
-          user_id: string
+          post_id: string | null
+          user_id: string | null
         }
         Insert: {
-          created_at?: string
           id?: string
-          post_id: string
-          user_id: string
+          post_id?: string | null
+          user_id?: string | null
         }
         Update: {
-          created_at?: string
           id?: string
-          post_id?: string
-          user_id?: string
+          post_id?: string | null
+          user_id?: string | null
         }
         Relationships: [
           {
@@ -256,42 +339,42 @@ export type Database = {
       }
       community_posts: {
         Row: {
-          comments_count: number
+          comments_count: number | null
           content: string
-          created_at: string
-          favorites_count: number
+          created_at: string | null
+          favorites_count: number | null
           hashtags: string[] | null
           id: string
           image_url: string | null
-          likes_count: number
+          likes_count: number | null
           topic_id: string | null
-          updated_at: string
+          updated_at: string | null
           user_id: string
         }
         Insert: {
-          comments_count?: number
+          comments_count?: number | null
           content: string
-          created_at?: string
-          favorites_count?: number
+          created_at?: string | null
+          favorites_count?: number | null
           hashtags?: string[] | null
           id?: string
           image_url?: string | null
-          likes_count?: number
+          likes_count?: number | null
           topic_id?: string | null
-          updated_at?: string
+          updated_at?: string | null
           user_id: string
         }
         Update: {
-          comments_count?: number
+          comments_count?: number | null
           content?: string
-          created_at?: string
-          favorites_count?: number
+          created_at?: string | null
+          favorites_count?: number | null
           hashtags?: string[] | null
           id?: string
           image_url?: string | null
-          likes_count?: number
+          likes_count?: number | null
           topic_id?: string | null
-          updated_at?: string
+          updated_at?: string | null
           user_id?: string
         }
         Relationships: [
@@ -391,36 +474,54 @@ export type Database = {
         }
         Relationships: []
       }
+      email_log: {
+        Row: {
+          sent_at: string
+          template: string
+          user_id: string
+        }
+        Insert: {
+          sent_at?: string
+          template: string
+          user_id: string
+        }
+        Update: {
+          sent_at?: string
+          template?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       experiences: {
         Row: {
-          company: string
-          created_at: string
+          company: string | null
+          created_at: string | null
           description: string | null
           id: string
           period: string | null
-          role: string
+          role: string | null
           sort_order: number
           updated_at: string
           user_id: string
         }
         Insert: {
-          company?: string
-          created_at?: string
+          company?: string | null
+          created_at?: string | null
           description?: string | null
           id?: string
           period?: string | null
-          role?: string
+          role?: string | null
           sort_order?: number
           updated_at?: string
           user_id: string
         }
         Update: {
-          company?: string
-          created_at?: string
+          company?: string | null
+          created_at?: string | null
           description?: string | null
           id?: string
           period?: string | null
-          role?: string
+          role?: string | null
           sort_order?: number
           updated_at?: string
           user_id?: string
@@ -430,26 +531,26 @@ export type Database = {
       feature_usage: {
         Row: {
           count: number
-          feature: string
+          feature_key: string
           id: string
-          period_month: string
-          updated_at: string
+          last_used_at: string | null
+          period: string
           user_id: string
         }
         Insert: {
           count?: number
-          feature: string
+          feature_key: string
           id?: string
-          period_month: string
-          updated_at?: string
+          last_used_at?: string | null
+          period: string
           user_id: string
         }
         Update: {
           count?: number
-          feature?: string
+          feature_key?: string
           id?: string
-          period_month?: string
-          updated_at?: string
+          last_used_at?: string | null
+          period?: string
           user_id?: string
         }
         Relationships: []
@@ -553,109 +654,162 @@ export type Database = {
       }
       payment_history: {
         Row: {
-          amount: number
-          created_at: string
-          currency: string
+          amount_cents: number
+          created_at: string | null
+          currency: string | null
           description: string | null
+          external_payment_id: string | null
           id: string
-          provider: string | null
-          provider_payment_id: string | null
+          paid_at: string | null
+          payment_method: string | null
+          payment_provider: string | null
           status: string
+          subscription_id: string | null
           user_id: string
         }
         Insert: {
-          amount: number
-          created_at?: string
-          currency?: string
+          amount_cents: number
+          created_at?: string | null
+          currency?: string | null
           description?: string | null
+          external_payment_id?: string | null
           id?: string
-          provider?: string | null
-          provider_payment_id?: string | null
+          paid_at?: string | null
+          payment_method?: string | null
+          payment_provider?: string | null
           status: string
+          subscription_id?: string | null
           user_id: string
         }
         Update: {
-          amount?: number
-          created_at?: string
-          currency?: string
+          amount_cents?: number
+          created_at?: string | null
+          currency?: string | null
           description?: string | null
+          external_payment_id?: string | null
           id?: string
-          provider?: string | null
-          provider_payment_id?: string | null
+          paid_at?: string | null
+          payment_method?: string | null
+          payment_provider?: string | null
           status?: string
+          subscription_id?: string | null
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "payment_history_subscription_id_fkey"
+            columns: ["subscription_id"]
+            isOneToOne: false
+            referencedRelation: "subscriptions"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       plans: {
         Row: {
           ai_credits_monthly: number | null
-          created_at: string
-          has_advanced_filters: boolean
-          has_all_courses: boolean
-          has_community_read: boolean
-          has_community_write: boolean
-          has_docx_export: boolean
-          has_interview: boolean
-          has_job_tracker: boolean
-          has_priority_support: boolean
+          created_at: string | null
+          description: string | null
+          has_advanced_filters: boolean | null
+          has_all_courses: boolean | null
+          has_benchmark: boolean | null
+          has_community_read: boolean | null
+          has_community_write: boolean | null
+          has_docx_export: boolean | null
+          has_interview: boolean | null
+          has_job_tracker: boolean | null
+          has_priority_support: boolean | null
+          has_score: boolean | null
+          has_watermark_free: boolean | null
           id: string
           interview_monthly_limit: number | null
-          is_active: boolean
+          interview_sessions_monthly: number | null
+          is_active: boolean | null
+          job_search_daily: number | null
+          job_search_results: number | null
           job_tracker_limit: number | null
           name: string
-          price_annual: number
-          price_monthly: number
+          pix_price_monthly_cents: number | null
+          pix_price_yearly_cents: number | null
+          price_annual: number | null
+          price_monthly: number | null
+          price_monthly_cents: number
+          price_yearly_cents: number
           slug: string
-          sort_order: number
+          sort_order: number | null
+          stripe_price_monthly: string | null
+          stripe_price_yearly: string | null
           tagline: string | null
-          updated_at: string
         }
         Insert: {
           ai_credits_monthly?: number | null
-          created_at?: string
-          has_advanced_filters?: boolean
-          has_all_courses?: boolean
-          has_community_read?: boolean
-          has_community_write?: boolean
-          has_docx_export?: boolean
-          has_interview?: boolean
-          has_job_tracker?: boolean
-          has_priority_support?: boolean
+          created_at?: string | null
+          description?: string | null
+          has_advanced_filters?: boolean | null
+          has_all_courses?: boolean | null
+          has_benchmark?: boolean | null
+          has_community_read?: boolean | null
+          has_community_write?: boolean | null
+          has_docx_export?: boolean | null
+          has_interview?: boolean | null
+          has_job_tracker?: boolean | null
+          has_priority_support?: boolean | null
+          has_score?: boolean | null
+          has_watermark_free?: boolean | null
           id?: string
           interview_monthly_limit?: number | null
-          is_active?: boolean
+          interview_sessions_monthly?: number | null
+          is_active?: boolean | null
+          job_search_daily?: number | null
+          job_search_results?: number | null
           job_tracker_limit?: number | null
           name: string
-          price_annual?: number
-          price_monthly?: number
+          pix_price_monthly_cents?: number | null
+          pix_price_yearly_cents?: number | null
+          price_annual?: number | null
+          price_monthly?: number | null
+          price_monthly_cents: number
+          price_yearly_cents: number
           slug: string
-          sort_order?: number
+          sort_order?: number | null
+          stripe_price_monthly?: string | null
+          stripe_price_yearly?: string | null
           tagline?: string | null
-          updated_at?: string
         }
         Update: {
           ai_credits_monthly?: number | null
-          created_at?: string
-          has_advanced_filters?: boolean
-          has_all_courses?: boolean
-          has_community_read?: boolean
-          has_community_write?: boolean
-          has_docx_export?: boolean
-          has_interview?: boolean
-          has_job_tracker?: boolean
-          has_priority_support?: boolean
+          created_at?: string | null
+          description?: string | null
+          has_advanced_filters?: boolean | null
+          has_all_courses?: boolean | null
+          has_benchmark?: boolean | null
+          has_community_read?: boolean | null
+          has_community_write?: boolean | null
+          has_docx_export?: boolean | null
+          has_interview?: boolean | null
+          has_job_tracker?: boolean | null
+          has_priority_support?: boolean | null
+          has_score?: boolean | null
+          has_watermark_free?: boolean | null
           id?: string
           interview_monthly_limit?: number | null
-          is_active?: boolean
+          interview_sessions_monthly?: number | null
+          is_active?: boolean | null
+          job_search_daily?: number | null
+          job_search_results?: number | null
           job_tracker_limit?: number | null
           name?: string
-          price_annual?: number
-          price_monthly?: number
+          pix_price_monthly_cents?: number | null
+          pix_price_yearly_cents?: number | null
+          price_annual?: number | null
+          price_monthly?: number | null
+          price_monthly_cents?: number
+          price_yearly_cents?: number
           slug?: string
-          sort_order?: number
+          sort_order?: number | null
+          stripe_price_monthly?: string | null
+          stripe_price_yearly?: string | null
           tagline?: string | null
-          updated_at?: string
         }
         Relationships: []
       }
@@ -664,108 +818,111 @@ export type Database = {
           area: string | null
           avatar_url: string | null
           city: string | null
-          created_at: string
-          current_plan: string
-          email: string
+          cpf: string | null
+          created_at: string | null
+          current_plan: string | null
+          email: string | null
           id: string
           instagram_url: string | null
           level: string | null
+          linkedin_sections: Json | null
           linkedin_url: string | null
-          name: string
+          name: string | null
           objective: string | null
-          onboarding_complete: boolean
+          onboarding_complete: boolean | null
           phone: string | null
           portfolio_url: string | null
           situation: string | null
           target_role: string | null
-          trial_used: boolean
-          updated_at: string
+          trial_used: boolean | null
+          updated_at: string | null
+          user_id: string | null
         }
         Insert: {
           area?: string | null
           avatar_url?: string | null
           city?: string | null
-          created_at?: string
-          current_plan?: string
-          email?: string
+          cpf?: string | null
+          created_at?: string | null
+          current_plan?: string | null
+          email?: string | null
           id: string
           instagram_url?: string | null
           level?: string | null
+          linkedin_sections?: Json | null
           linkedin_url?: string | null
-          name?: string
+          name?: string | null
           objective?: string | null
-          onboarding_complete?: boolean
+          onboarding_complete?: boolean | null
           phone?: string | null
           portfolio_url?: string | null
           situation?: string | null
           target_role?: string | null
-          trial_used?: boolean
-          updated_at?: string
+          trial_used?: boolean | null
+          updated_at?: string | null
+          user_id?: string | null
         }
         Update: {
           area?: string | null
           avatar_url?: string | null
           city?: string | null
-          created_at?: string
-          current_plan?: string
-          email?: string
+          cpf?: string | null
+          created_at?: string | null
+          current_plan?: string | null
+          email?: string | null
           id?: string
           instagram_url?: string | null
           level?: string | null
+          linkedin_sections?: Json | null
           linkedin_url?: string | null
-          name?: string
+          name?: string | null
           objective?: string | null
-          onboarding_complete?: boolean
+          onboarding_complete?: boolean | null
           phone?: string | null
           portfolio_url?: string | null
           situation?: string | null
           target_role?: string | null
-          trial_used?: boolean
-          updated_at?: string
+          trial_used?: boolean | null
+          updated_at?: string | null
+          user_id?: string | null
         }
         Relationships: []
       }
       saved_jobs: {
         Row: {
-          company: string
-          created_at: string
-          description: string | null
+          company: string | null
+          created_at: string | null
           id: string
           location: string | null
-          match_score: number | null
           notes: string | null
-          status: string
-          title: string
+          status: string | null
+          title: string | null
           type: string | null
           updated_at: string
           url: string | null
           user_id: string
         }
         Insert: {
-          company?: string
-          created_at?: string
-          description?: string | null
+          company?: string | null
+          created_at?: string | null
           id?: string
           location?: string | null
-          match_score?: number | null
           notes?: string | null
-          status?: string
-          title: string
+          status?: string | null
+          title?: string | null
           type?: string | null
           updated_at?: string
           url?: string | null
           user_id: string
         }
         Update: {
-          company?: string
-          created_at?: string
-          description?: string | null
+          company?: string | null
+          created_at?: string | null
           id?: string
           location?: string | null
-          match_score?: number | null
           notes?: string | null
-          status?: string
-          title?: string
+          status?: string | null
+          title?: string | null
           type?: string | null
           updated_at?: string
           url?: string | null
@@ -800,41 +957,53 @@ export type Database = {
       subscriptions: {
         Row: {
           billing_cycle: string | null
-          created_at: string
+          canceled_at: string | null
+          created_at: string | null
           current_period_end: string | null
           current_period_start: string | null
+          external_customer_id: string | null
+          external_subscription_id: string | null
           id: string
+          payment_provider: string | null
           plan_id: string
           status: string
-          stripe_subscription_id: string | null
           trial_end: string | null
-          updated_at: string
+          trial_start: string | null
+          updated_at: string | null
           user_id: string
         }
         Insert: {
           billing_cycle?: string | null
-          created_at?: string
+          canceled_at?: string | null
+          created_at?: string | null
           current_period_end?: string | null
           current_period_start?: string | null
+          external_customer_id?: string | null
+          external_subscription_id?: string | null
           id?: string
+          payment_provider?: string | null
           plan_id: string
           status?: string
-          stripe_subscription_id?: string | null
           trial_end?: string | null
-          updated_at?: string
+          trial_start?: string | null
+          updated_at?: string | null
           user_id: string
         }
         Update: {
           billing_cycle?: string | null
-          created_at?: string
+          canceled_at?: string | null
+          created_at?: string | null
           current_period_end?: string | null
           current_period_start?: string | null
+          external_customer_id?: string | null
+          external_subscription_id?: string | null
           id?: string
+          payment_provider?: string | null
           plan_id?: string
           status?: string
-          stripe_subscription_id?: string | null
           trial_end?: string | null
-          updated_at?: string
+          trial_start?: string | null
+          updated_at?: string | null
           user_id?: string
         }
         Relationships: [
@@ -843,6 +1012,83 @@ export type Database = {
             columns: ["plan_id"]
             isOneToOne: false
             referencedRelation: "plans"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      table_vagacerta_courses: {
+        Row: {
+          created_at: string | null
+          description: string | null
+          id: string
+          thumbnail_url: string | null
+          title: string
+        }
+        Insert: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          thumbnail_url?: string | null
+          title: string
+        }
+        Update: {
+          created_at?: string | null
+          description?: string | null
+          id?: string
+          thumbnail_url?: string | null
+          title?: string
+        }
+        Relationships: []
+      }
+      table_vagacerta_lessons: {
+        Row: {
+          id: string
+          module_id: string
+          order: number | null
+          title: string | null
+          video_url: string | null
+        }
+        Insert: {
+          id?: string
+          module_id: string
+          order?: number | null
+          title?: string | null
+          video_url?: string | null
+        }
+        Update: {
+          id?: string
+          module_id?: string
+          order?: number | null
+          title?: string | null
+          video_url?: string | null
+        }
+        Relationships: []
+      }
+      table_vagacerta_modules: {
+        Row: {
+          course_id: string
+          id: string
+          order: number | null
+          title: string | null
+        }
+        Insert: {
+          course_id: string
+          id?: string
+          order?: number | null
+          title?: string | null
+        }
+        Update: {
+          course_id?: string
+          id?: string
+          order?: number | null
+          title?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "table_vagacerta_modules_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: true
+            referencedRelation: "table_vagacerta_courses"
             referencedColumns: ["id"]
           },
         ]
@@ -871,47 +1117,54 @@ export type Database = {
         }
         Relationships: []
       }
+    }
+    Views: {
       user_roles: {
         Row: {
-          id: string
-          role: Database["public"]["Enums"]["app_role"]
-          user_id: string
+          id: string | null
+          role: string | null
+          user_id: string | null
         }
         Insert: {
-          id?: string
-          role?: Database["public"]["Enums"]["app_role"]
-          user_id: string
+          id?: string | null
+          role?: string | null
+          user_id?: string | null
         }
         Update: {
-          id?: string
-          role?: Database["public"]["Enums"]["app_role"]
-          user_id?: string
+          id?: string | null
+          role?: string | null
+          user_id?: string | null
         }
         Relationships: []
       }
-    }
-    Views: {
-      [_ in never]: never
     }
     Functions: {
       check_feature_access: {
         Args: { p_feature: string; p_user_id: string }
         Returns: Json
       }
-      has_role: {
+      expire_trials: { Args: never; Returns: undefined }
+      get_gemini_key: { Args: never; Returns: string }
+      get_user_plan: { Args: { p_user_id: string }; Returns: string }
+      is_admin: { Args: never; Returns: boolean }
+      recharge_credits: {
         Args: {
-          _role: Database["public"]["Enums"]["app_role"]
-          _user_id: string
+          p_credits: number
+          p_payment_id?: string
+          p_price_cents: number
+          p_user_id: string
         }
-        Returns: boolean
+        Returns: Json
       }
+      register_interview_session: { Args: never; Returns: undefined }
+      renew_monthly_credits: { Args: never; Returns: undefined }
       use_ai_credit: {
         Args: { p_amount?: number; p_user_id: string }
         Returns: Json
       }
     }
     Enums: {
-      app_role: "admin" | "user"
+      [_ in never]: never
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1038,8 +1291,6 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {
-      app_role: ["admin", "user"],
-    },
+    Enums: {},
   },
 } as const
