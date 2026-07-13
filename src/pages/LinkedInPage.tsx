@@ -50,7 +50,7 @@ const sections = [
 ];
 
 export default function LinkedInPage({ user }: { user: UserData }) {
-  const { useCredit, plan } = usePlan();
+  const { useCredit, plan, refreshPlan } = usePlan();
   const [fields, setFields] = useState<Record<string, string>>({});
   const [aiLoading, setAiLoading] = useState<string | null>(null);
   const loaded = useRef(false);
@@ -109,19 +109,19 @@ export default function LinkedInPage({ user }: { user: UserData }) {
       } else {
         result = await gemini.generateText(`Gere conteúdo profissional para a seção "${sections.find(s => s.id === id)?.label}" do LinkedIn de um profissional de ${user.area || "TI"} buscando ${user.target_role || "nova posição"}. Apenas o texto.`);
       }
+      if (result === gemini.NO_CREDITS) {
+        setAiLoading(null);
+        toast({ title: "Sem créditos de IA", description: "Seus créditos acabaram. Faça upgrade do plano.", variant: "destructive" });
+        return;
+      }
       if (!result) throw new Error("empty");
     } catch {
       setAiLoading(null);
       toast({ title: "Falha na IA", description: "Não foi possível gerar o conteúdo. Tente novamente.", variant: "destructive" });
       return;
     }
-    const credit = await useCredit(1);
-    if (!credit.success) {
-      setAiLoading(null);
-      toast({ title: "Sem créditos de IA", description: "Seus créditos acabaram. Faça upgrade do plano.", variant: "destructive" });
-      return;
-    }
     update(id, result);
+    await refreshPlan();
     setAiLoading(null);
     toast({ title: "Conteúdo gerado com IA ✨" });
   };
@@ -132,14 +132,15 @@ export default function LinkedInPage({ user }: { user: UserData }) {
       toast({ title: "Sem créditos de IA", description: "Faça upgrade do seu plano para usar a IA.", variant: "destructive" });
       return;
     }
-    const credit = await useCredit(1);
-    if (!credit.success) {
+    setAiLoading(id);
+    const result = await gemini.improveText(fields[id]);
+    if (result === gemini.NO_CREDITS) {
+      setAiLoading(null);
       toast({ title: "Sem créditos de IA", description: "Seus créditos acabaram. Faça upgrade do plano.", variant: "destructive" });
       return;
     }
-    setAiLoading(id);
-    const result = await gemini.improveText(fields[id]);
     update(id, result);
+    await refreshPlan();
     setAiLoading(null);
     toast({ title: "Texto melhorado ✨" });
   };

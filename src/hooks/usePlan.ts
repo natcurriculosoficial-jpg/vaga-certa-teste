@@ -139,19 +139,17 @@ export function usePlan() {
     fetchPlan();
   }, [fetchPlan]);
 
+  // O débito de crédito é feito server-side pela edge function ai-vagacerta
+  // (fonte da verdade, à prova de burla). Aqui só verificamos o saldo para a UX
+  // — não consome. Após a geração, chame refreshPlan() para atualizar o saldo.
   const useCredit = useCallback(
     async (amount: number = 1): Promise<{ success: boolean; remaining: number }> => {
       if (!userId) return { success: false, remaining: 0 };
-      const { data, error } = await (supabase as any).rpc("use_ai_credit", {
-        p_user_id: userId,
-        p_amount: amount,
-      });
-      if (error || !data) return { success: false, remaining: 0 };
-      _planCache = null;
-      await fetchPlan();
-      return { success: !!data.success, remaining: data.remaining ?? 0 };
+      if (plan.isUnlimited) return { success: true, remaining: -1 };
+      const remaining = plan.aiCreditsRemaining;
+      return { success: remaining >= amount, remaining };
     },
-    [userId, fetchPlan]
+    [userId, plan.isUnlimited, plan.aiCreditsRemaining]
   );
 
   const checkAccess = useCallback(

@@ -1,5 +1,9 @@
 import { supabase } from "@/integrations/supabase/client";
 
+// Sentinelas para o caller mostrar o aviso amigável certo (nunca página de erro)
+export const NO_CREDITS = "__NO_CREDITS__";
+export const NO_ACCESS = "__NO_ACCESS__"; // recurso exige plano superior
+
 async function callAI(action: string, payload: Record<string, any>): Promise<string> {
   try {
     const { data, error } = await supabase.functions.invoke("ai-vagacerta", {
@@ -7,10 +11,21 @@ async function callAI(action: string, payload: Record<string, any>): Promise<str
     });
 
     if (error) {
+      // Erro HTTP (ex.: 402 sem créditos) traz o corpo em error.context
+      try {
+        const body = error.context && typeof error.context.json === "function"
+          ? await error.context.json()
+          : null;
+        if (body?.code === "insufficient_credits") return NO_CREDITS;
+        if (body?.code === "plan_upgrade_required") return NO_ACCESS;
+        if (body?.error) return body.error;
+      } catch { /* corpo não-JSON */ }
       console.error("AI function error:", error);
       return "Erro ao processar com IA. Tente novamente.";
     }
 
+    if (data?.code === "insufficient_credits") return NO_CREDITS;
+    if (data?.code === "plan_upgrade_required") return NO_ACCESS;
     if (data?.error) {
       console.error("AI response error:", data.error);
       return data.error;

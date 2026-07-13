@@ -15,7 +15,7 @@ interface Message {
 }
 
 export default function Interview({ user }: { user: UserData }) {
-  const { useCredit, plan } = usePlan();
+  const { useCredit, plan, refreshPlan } = usePlan();
   const [role, setRole] = useState(user.target_role || "");
   const [company, setCompany] = useState("");
   const [started, setStarted] = useState(false);
@@ -27,6 +27,10 @@ export default function Interview({ user }: { user: UserData }) {
   useEffect(() => { bottomRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages]);
 
   const start = async () => {
+    if (!plan.hasInterview) {
+      toast({ title: "Recurso do plano Candidato", description: "O simulador de entrevista está disponível a partir do plano Candidato. Faça upgrade para usar.", variant: "destructive" });
+      return;
+    }
     if (!plan.canUseAI) {
       toast({ title: "Sem créditos de IA", description: "Faça upgrade do plano para usar o simulador.", variant: "destructive" });
       return;
@@ -35,21 +39,21 @@ export default function Interview({ user }: { user: UserData }) {
     let question = "";
     try {
       question = await geminiService.simulateInterview(role, company);
+      if (question === geminiService.NO_CREDITS) {
+        setLoading(false);
+        toast({ title: "Sem créditos de IA", description: "Seus créditos acabaram. Faça upgrade do plano.", variant: "destructive" });
+        return;
+      }
       if (!question) throw new Error("empty");
     } catch {
       setLoading(false);
       toast({ title: "Falha na IA", description: "Não foi possível iniciar a entrevista. Tente novamente.", variant: "destructive" });
       return;
     }
-    const credit = await useCredit(1);
-    if (!credit.success) {
-      setLoading(false);
-      toast({ title: "Sem créditos de IA", description: "Seus créditos acabaram. Faça upgrade do plano.", variant: "destructive" });
-      return;
-    }
     supabase.rpc("register_interview_session").then(({ error }) => {
       if (error) console.error("register_interview_session:", error);
     });
+    await refreshPlan();
     setStarted(true);
     setMessages([{ role: "assistant", content: `Olá! Eu sou a **Nat IA** 🎤, sua entrevistadora virtual.\n\nVamos simular uma entrevista para ${role}${company ? ` na ${company}` : ""}. Vou fazer perguntas variadas para te preparar.\n\n**Primeira pergunta:**\n\n${question}` }]);
     setLoading(false);
@@ -73,9 +77,16 @@ export default function Interview({ user }: { user: UserData }) {
     let nextQuestion = "";
     try {
       evaluation = await geminiService.evaluateAnswer(lastQuestion, currentInput, role);
+      if (evaluation === geminiService.NO_CREDITS) {
+        setLoading(false);
+        setMessages(messages);
+        setInput(currentInput);
+        toast({ title: "Sem créditos de IA", description: "Seus créditos acabaram. Faça upgrade do plano.", variant: "destructive" });
+        return;
+      }
       const prevQA = newMessages.map(m => `${m.role === "assistant" ? "Entrevistador" : "Candidato"}: ${m.content}`).join("\n");
       nextQuestion = await geminiService.simulateInterview(role, company, prevQA);
-      if (!evaluation || !nextQuestion) throw new Error("empty");
+      if (!evaluation || !nextQuestion || nextQuestion === geminiService.NO_CREDITS) throw new Error("empty");
     } catch {
       setLoading(false);
       setMessages(messages);
@@ -84,13 +95,7 @@ export default function Interview({ user }: { user: UserData }) {
       return;
     }
 
-    const credit = await useCredit(1);
-    if (!credit.success) {
-      setLoading(false);
-      toast({ title: "Sem créditos de IA", description: "Seus créditos acabaram. Faça upgrade do plano.", variant: "destructive" });
-      return;
-    }
-
+    await refreshPlan();
     setMessages(prev => [...prev, {
       role: "assistant",
       content: `${evaluation}\n\n---\n\n**Próxima pergunta:**\n\n${nextQuestion}`

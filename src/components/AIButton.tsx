@@ -38,7 +38,7 @@ export default function AIButton({
   variant = "default",
 }: AIButtonProps) {
   const navigate = useNavigate();
-  const { plan, useCredit } = usePlan();
+  const { plan, useCredit, refreshPlan } = usePlan();
   const [loading, setLoading] = useState(false);
   const [showNoCredits, setShowNoCredits] = useState(false);
 
@@ -46,12 +46,14 @@ export default function AIButton({
     if (loading || disabled) return;
     setLoading(true);
     try {
+      // Checagem de UX (o débito real é server-side na ai-vagacerta)
       const result = await useCredit(creditsNeeded);
       if (!result.success) {
         setShowNoCredits(true);
         return;
       }
       await onGenerate();
+      await refreshPlan();
     } finally {
       setLoading(false);
     }
