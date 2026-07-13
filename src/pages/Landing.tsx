@@ -6,6 +6,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import Logo from "@/components/Logo";
 
 const FEATURES = [
   { icon: FileText, title: "Currículo com IA", desc: "Monte um currículo profissional com bullets de impacto gerados por IA em minutos." },
@@ -37,12 +38,7 @@ export default function Landing() {
       {/* Header */}
       <header className="sticky top-0 z-40 backdrop-blur-xl bg-background/70 border-b border-border">
         <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-lg gradient-primary flex items-center justify-center">
-              <Sparkles className="h-4 w-4 text-white" />
-            </div>
-            <span className="font-bold text-lg">Vaga Certa</span>
-          </div>
+          <Logo size="md" />
           <div className="flex items-center gap-2">
             <Button variant="ghost" size="sm" onClick={goLogin}>Entrar</Button>
             <Button size="sm" className="gradient-primary text-white" onClick={goSignup}>
@@ -169,9 +165,7 @@ export default function Landing() {
       <footer className="border-t border-border">
         <div className="max-w-6xl mx-auto px-4 py-8 flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-muted-foreground">
           <div className="flex items-center gap-2">
-            <div className="w-6 h-6 rounded-md gradient-primary flex items-center justify-center">
-              <Sparkles className="h-3 w-3 text-white" />
-            </div>
+            <Logo size="sm" showText={false} />
             <span>© {new Date().getFullYear()} Vaga Certa</span>
           </div>
           <div className="flex items-center gap-4">

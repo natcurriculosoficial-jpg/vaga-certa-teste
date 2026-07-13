@@ -1,18 +1,31 @@
-const Logo = ({ size = "md" }: { size?: "sm" | "md" | "lg" }) => {
-  const sizes = {
-    sm: { badge: "text-sm px-1.5 py-0.5", text: "text-base" },
-    md: { badge: "text-lg px-2 py-1", text: "text-xl" },
-    lg: { badge: "text-2xl px-3 py-1.5", text: "text-3xl" },
-  };
-  const s = sizes[size];
+interface LogoProps {
+  size?: "sm" | "md" | "lg";
+  showText?: boolean;
+}
+
+const MARK_SIZES = { sm: "h-6", md: "h-8", lg: "h-11" };
+const TEXT_SIZES = { sm: "text-base", md: "text-xl", lg: "text-3xl" };
+
+// Ícone VC adapta ao tema (V escuro no fundo claro, V branco no fundo escuro).
+// O texto usa text-foreground, que já inverte conforme o tema.
+const Logo = ({ size = "md", showText = true }: LogoProps) => {
   return (
     <div className="flex items-center gap-2">
-      <span className={`${s.badge} font-extrabold rounded-lg bg-primary text-primary-foreground`}>
-        VC
-      </span>
-      <span className={`${s.text} font-bold text-foreground tracking-tight`}>
-        VAGA CERTA
-      </span>
+      <img
+        src="/logo-mark-light.png"
+        alt="Vaga Certa"
+        className={`${MARK_SIZES[size]} w-auto block dark:hidden`}
+      />
+      <img
+        src="/logo-mark-dark.png"
+        alt="Vaga Certa"
+        className={`${MARK_SIZES[size]} w-auto hidden dark:block`}
+      />
+      {showText && (
+        <span className={`${TEXT_SIZES[size]} font-bold text-foreground tracking-tight`}>
+          Vaga Certa
+        </span>
+      )}
     </div>
   );
 };

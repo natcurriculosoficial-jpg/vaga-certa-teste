@@ -3,6 +3,7 @@ import { Link, useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import { Mail, Lock, Eye, EyeOff, Loader2, Sparkles } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
+import Logo from "@/components/Logo";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -63,8 +64,8 @@ export default function Login() {
         className="w-full max-w-md space-y-8 relative z-10"
       >
         <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ delay: 0.1 }} className="text-center space-y-2">
-          <div className="w-14 h-14 rounded-2xl gradient-primary flex items-center justify-center mx-auto">
-            <Sparkles className="h-7 w-7 text-white" />
+          <div className="flex justify-center">
+            <Logo size="lg" showText={false} />
           </div>
           <h1 className="text-2xl font-bold text-foreground">Bem-vindo de volta</h1>
           <p className="text-muted-foreground text-sm">Entre na sua conta Vaga Certa</p>
