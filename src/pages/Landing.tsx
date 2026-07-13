@@ -1,7 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { motion } from "framer-motion";
 import {
-  Sparkles, FileText, Linkedin, Search, MessageSquare,
+  FileText, Linkedin, Search, MessageSquare,
   Check, ArrowRight, Zap, ShieldCheck, Users,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -165,7 +165,7 @@ export default function Landing() {
       <footer className="border-t border-border">
         <div className="max-w-6xl mx-auto px-4 py-8 flex flex-col md:flex-row items-center justify-between gap-4 text-sm text-muted-foreground">
           <div className="flex items-center gap-2">
-            <Logo size="sm" showText={false} />
+            <Logo size="sm" variant="icon" />
             <span>© {new Date().getFullYear()} Vaga Certa</span>
           </div>
           <div className="flex items-center gap-4">

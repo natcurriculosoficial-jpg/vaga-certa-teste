@@ -93,7 +93,7 @@ export default function Signup() {
       >
         <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ delay: 0.1 }} className="text-center space-y-2">
           <div className="flex justify-center">
-            <Logo size="lg" showText={false} />
+            <Logo size="lg" variant="icon" />
           </div>
           <h1 className="text-2xl font-bold text-foreground">
             {step === 3 ? "Verifique seu e-mail" : "Criar conta gratuita"}

@@ -65,7 +65,7 @@ export default function Login() {
       >
         <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} transition={{ delay: 0.1 }} className="text-center space-y-2">
           <div className="flex justify-center">
-            <Logo size="lg" showText={false} />
+            <Logo size="lg" variant="icon" />
           </div>
           <h1 className="text-2xl font-bold text-foreground">Bem-vindo de volta</h1>
           <p className="text-muted-foreground text-sm">Entre na sua conta Vaga Certa</p>

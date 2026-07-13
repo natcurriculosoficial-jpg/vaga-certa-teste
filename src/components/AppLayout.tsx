@@ -138,13 +138,11 @@ export default function AppLayout({
         style={{ background: isDark ? "hsl(220 25% 11%)" : "#deddff" }}
       >
         {/* Logo / header */}
-        <div className={`flex items-center ${isCollapsed ? "justify-center py-4 px-2" : "px-5 py-4 gap-3"}`}>
+        <div className={`flex items-center ${isCollapsed ? "justify-center py-4 px-2" : "px-5 py-4"}`}>
           {isCollapsed ? (
-            <div className="w-9 h-9 rounded-[10px] gradient-primary flex items-center justify-center shrink-0">
-              <span className="text-xs font-bold text-white">VC</span>
-            </div>
+            <Logo size="sm" variant="icon" />
           ) : (
-            <Logo size="sm" />
+            <Logo size="sm" variant="full" />
           )}
         </div>
 
